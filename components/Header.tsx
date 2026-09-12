@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowUpRight } from "lucide-react";
+import { ArrowUpRight, LogOut } from "lucide-react";
+import { signOut } from "next-auth/react";
 import Avatar from "./Avatar";
 import ThemeToggle from "./ThemeToggle";
 import { useDemo } from "./DemoProvider";
@@ -43,6 +44,14 @@ export default function Header() {
             <Avatar user={user} size="sm" />
             <span>{user.name.split(" ")[0]}</span>
           </Link>
+          <button
+            className="icon-button"
+            onClick={() => signOut({ callbackUrl: "/login" })}
+            aria-label="Chiqish"
+            title="Akkauntdan chiqish"
+          >
+            <LogOut size={18} />
+          </button>
         </div>
       </div>
     </header>
