@@ -14,6 +14,11 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   // NextAuth otherwise throws UntrustedHost and shows a generic
   // "server configuration" error on every request.
   trustHost: true,
+  // Render terminates TLS at its edge and forwards to the app over plain
+  // HTTP, so Auth.js can't auto-detect the connection as secure. Without
+  // this, the PKCE/state cookies get set and read under different names
+  // (secure vs non-secure), which fails to parse on callback.
+  useSecureCookies: process.env.NODE_ENV === "production",
   session: { strategy: "jwt" },
   callbacks: {
     async signIn({ user }) {

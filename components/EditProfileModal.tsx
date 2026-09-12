@@ -16,15 +16,11 @@ export default function EditProfileModal({
   const [name, setName] = useState(user.name);
   const [bio, setBio] = useState(user.bio);
   const [skills, setSkills] = useState(user.skills.join(", "));
-  const [projectName, setProjectName] = useState(user.project.name);
-  const [projectDescription, setProjectDescription] = useState(
-    user.project.description,
-  );
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
   async function submit(event: FormEvent) {
     event.preventDefault();
-    if (!name.trim() || !projectName.trim() || submitting) return;
+    if (!name.trim() || submitting) return;
     setSubmitting(true);
     setError("");
     try {
@@ -39,10 +35,7 @@ export default function EditProfileModal({
               .filter(Boolean),
           ),
         ].slice(0, 8),
-        project: {
-          name: projectName.trim(),
-          description: projectDescription.trim(),
-        },
+        project: user.project,
       });
       onSaved();
       onClose();
@@ -91,24 +84,6 @@ export default function EditProfileModal({
             8 ta.
           </small>
         </label>
-        <label className="field">
-          <span>Loyiha nomi</span>
-          <input
-            value={projectName}
-            onChange={(e) => setProjectName(e.target.value)}
-            required
-            maxLength={80}
-          />
-        </label>
-        <label className="field">
-          <span>Loyiha tavsifi</span>
-          <textarea
-            rows={3}
-            value={projectDescription}
-            onChange={(e) => setProjectDescription(e.target.value)}
-            maxLength={500}
-          />
-        </label>
         {error && (
           <p className="form-error" role="alert">
             {error}
@@ -125,7 +100,7 @@ export default function EditProfileModal({
           <button
             type="submit"
             className="button button-primary"
-            disabled={!name.trim() || !projectName.trim() || submitting}
+            disabled={!name.trim() || submitting}
           >
             <Check size={17} />
             {submitting ? "Saqlanmoqda…" : "Saqlash"}
