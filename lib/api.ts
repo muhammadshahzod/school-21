@@ -1,6 +1,4 @@
-// Backend-backed adapter with the same shape as components/mock-api.ts.
-// Swap the import in components/DemoProvider.tsx from "./mock-api" to
-// "@/lib/api" to switch the frontend from mock data to the real API.
+// Backend-backed data layer consumed by components/DemoProvider.tsx.
 import type {
   Community,
   Conversation,
@@ -70,10 +68,38 @@ type ApiCommunity = {
   topics: { name: string; posts: number; skill: string }[];
 };
 
+type ApiChannelMessage = {
+  id: string;
+  senderId: string;
+  content: string;
+  createdAt: string;
+};
+
 async function fetchJson<T>(url: string): Promise<T> {
   const res = await fetch(url, { credentials: "same-origin" });
   if (!res.ok) {
     throw new Error(`So'rov muvaffaqiyatsiz: ${url} (${res.status})`);
+  }
+  return res.json() as Promise<T>;
+}
+
+async function sendJson<T>(
+  url: string,
+  method: "POST" | "PATCH",
+  body?: unknown
+): Promise<T> {
+  const res = await fetch(url, {
+    method,
+    headers: { "Content-Type": "application/json" },
+    credentials: "same-origin",
+    body: body !== undefined ? JSON.stringify(body) : undefined,
+  });
+  if (!res.ok) {
+    const payload = await res.json().catch(() => null);
+    throw new Error(
+      (payload && typeof payload.error === "string" && payload.error) ||
+        `So'rov muvaffaqiyatsiz: ${url} (${res.status})`
+    );
   }
   return res.json() as Promise<T>;
 }
@@ -192,4 +218,109 @@ export async function getMessages(): Promise<Message[]> {
 
 export async function getCommunity(): Promise<Community> {
   return fetchJson<ApiCommunity>("/api/community");
+}
+
+export async function sendPost(
+  content: string,
+  skill: string,
+  imageUrl?: string
+): Promise<Post> {
+  const post = await sendJson<ApiPost>("/api/posts", "POST", {
+    content,
+    skill,
+    imageUrl,
+  });
+  return toPost(post);
+}
+
+export async function toggleLikePost(id: string): Promise<{ liked: boolean }> {
+  return sendJson(`/api/posts/${id}/like`, "POST");
+}
+
+export async function toggleSavePost(id: string): Promise<{ saved: boolean }> {
+  return sendJson(`/api/posts/${id}/save`, "POST");
+}
+
+export async function sendComment(
+  postId: string,
+  content: string
+): Promise<PeerComment> {
+  const comment = await sendJson<ApiComment>(
+    `/api/posts/${postId}/comments`,
+    "POST",
+    { content }
+  );
+  return toComment(comment);
+}
+
+export async function sendDirectMessage(
+  receiverId: string,
+  content: string
+): Promise<Message> {
+  const message = await sendJson<{
+    id: string;
+    senderId: string;
+    content: string;
+    createdAt: string;
+  }>("/api/messages", "POST", { receiverId, content });
+  return {
+    id: message.id,
+    conversationId: receiverId,
+    senderId: message.senderId,
+    text: message.content,
+    time: shortTime(message.createdAt),
+  };
+}
+
+export const GENERAL_CHANNEL_ID = "general";
+
+export async function getGeneralMessages(): Promise<Message[]> {
+  const messages = await fetchJson<ApiChannelMessage[]>(
+    "/api/messages/general"
+  );
+  return messages.map((m) => ({
+    id: m.id,
+    conversationId: GENERAL_CHANNEL_ID,
+    senderId: m.senderId,
+    text: m.content,
+    time: shortTime(m.createdAt),
+  }));
+}
+
+export async function sendGeneralMessage(content: string): Promise<Message> {
+  const message = await sendJson<ApiChannelMessage>(
+    "/api/messages/general",
+    "POST",
+    { content }
+  );
+  return {
+    id: message.id,
+    conversationId: GENERAL_CHANNEL_ID,
+    senderId: message.senderId,
+    text: message.content,
+    time: shortTime(message.createdAt),
+  };
+}
+
+// GET /api/messages/[userId] marks the peer's messages as read as a
+// side effect; we already hold the full message list client-side, so the
+// response body itself isn't needed here.
+export async function markConversationRead(peerId: string): Promise<void> {
+  await fetchJson(`/api/messages/${peerId}`);
+}
+
+export async function updateMyProfile(profile: {
+  name: string;
+  bio: string;
+  skills: string[];
+  project: { name: string; description: string };
+}): Promise<Peer> {
+  const updated = await sendJson<ApiPerson>("/api/users/me", "PATCH", {
+    name: profile.name,
+    bio: profile.bio,
+    skills: profile.skills,
+    projectTitle: profile.project.name,
+    projectDescription: profile.project.description,
+  });
+  return toPeer(updated);
 }

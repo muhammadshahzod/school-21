@@ -20,27 +20,36 @@ export default function EditProfileModal({
   const [projectDescription, setProjectDescription] = useState(
     user.project.description,
   );
-  function submit(event: FormEvent) {
+  const [error, setError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  async function submit(event: FormEvent) {
     event.preventDefault();
-    if (!name.trim() || !projectName.trim()) return;
-    updateProfile({
-      name: name.trim(),
-      bio: bio.trim(),
-      skills: [
-        ...new Set(
-          skills
-            .split(",")
-            .map((s) => s.trim())
-            .filter(Boolean),
-        ),
-      ].slice(0, 8),
-      project: {
-        name: projectName.trim(),
-        description: projectDescription.trim(),
-      },
-    });
-    onSaved();
-    onClose();
+    if (!name.trim() || !projectName.trim() || submitting) return;
+    setSubmitting(true);
+    setError("");
+    try {
+      await updateProfile({
+        name: name.trim(),
+        bio: bio.trim(),
+        skills: [
+          ...new Set(
+            skills
+              .split(",")
+              .map((s) => s.trim())
+              .filter(Boolean),
+          ),
+        ].slice(0, 8),
+        project: {
+          name: projectName.trim(),
+          description: projectDescription.trim(),
+        },
+      });
+      onSaved();
+      onClose();
+    } catch {
+      setError("Saqlashda xatolik yuz berdi. Qaytadan urinib ko‘ring.");
+      setSubmitting(false);
+    }
   }
   return (
     <Modal
@@ -100,6 +109,11 @@ export default function EditProfileModal({
             maxLength={500}
           />
         </label>
+        {error && (
+          <p className="form-error" role="alert">
+            {error}
+          </p>
+        )}
         <div className="modal-footer">
           <button
             type="button"
@@ -111,10 +125,10 @@ export default function EditProfileModal({
           <button
             type="submit"
             className="button button-primary"
-            disabled={!name.trim() || !projectName.trim()}
+            disabled={!name.trim() || !projectName.trim() || submitting}
           >
             <Check size={17} />
-            Saqlash
+            {submitting ? "Saqlanmoqda…" : "Saqlash"}
           </button>
         </div>
       </form>

@@ -19,9 +19,10 @@ export default function CreatePostModal({
   const [image, setImage] = useState("");
   const [skill, setSkill] = useState<string>(SKILLS[0]);
   const [error, setError] = useState("");
-  function submit(event: FormEvent) {
+  const [submitting, setSubmitting] = useState(false);
+  async function submit(event: FormEvent) {
     event.preventDefault();
-    if (!text.trim()) return;
+    if (!text.trim() || submitting) return;
     if (image.trim()) {
       try {
         if (!["http:", "https:"].includes(new URL(image.trim()).protocol))
@@ -31,9 +32,16 @@ export default function CreatePostModal({
         return;
       }
     }
-    addPost(text, skill, image.trim() || undefined);
-    onCreated?.();
-    onClose();
+    setSubmitting(true);
+    setError("");
+    try {
+      await addPost(text, skill, image.trim() || undefined);
+      onCreated?.();
+      onClose();
+    } catch {
+      setError("Post yaratishda xatolik yuz berdi. Qaytadan urinib ko‘ring.");
+      setSubmitting(false);
+    }
   }
   return (
     <Modal
@@ -103,9 +111,10 @@ export default function CreatePostModal({
           <button
             className="button button-primary"
             type="submit"
-            disabled={!text.trim()}
+            disabled={!text.trim() || submitting}
           >
-            Ulashish <ArrowUpRight size={17} />
+            {submitting ? "Yuborilmoqda…" : "Ulashish"}
+            {!submitting && <ArrowUpRight size={17} />}
           </button>
         </div>
       </form>

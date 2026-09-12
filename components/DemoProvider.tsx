@@ -8,14 +8,26 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import { useSession } from "next-auth/react";
+import { X } from "lucide-react";
 import {
+  GENERAL_CHANNEL_ID,
   getCommunity,
   getConversations,
   getCurrentUser,
+  getGeneralMessages,
   getMessages,
   getPeers,
   getPosts,
-} from "./mock-api";
+  markConversationRead,
+  sendComment as apiSendComment,
+  sendDirectMessage,
+  sendGeneralMessage,
+  sendPost as apiSendPost,
+  toggleLikePost,
+  toggleSavePost,
+  updateMyProfile,
+} from "@/lib/api";
 import type { Community, Conversation, Message, Peer, Post } from "./types";
 
 interface DemoState {
@@ -28,7 +40,7 @@ interface DemoState {
 }
 
 interface DemoContextValue extends DemoState {
-  addPost: (text: string, skill: string, image?: string) => void;
+  addPost: (text: string, skill: string, image?: string) => Promise<void>;
   toggleLike: (id: string) => void;
   toggleSave: (id: string) => void;
   addComment: (id: string, text: string) => void;
@@ -37,14 +49,14 @@ interface DemoContextValue extends DemoState {
   createGroup: (name: string, memberIds: string[]) => string;
   updateProfile: (
     profile: Pick<Peer, "name" | "bio" | "skills" | "project">,
-  ) => void;
+  ) => Promise<void>;
 }
 
 const DemoContext = createContext<DemoContextValue | null>(null);
 // HTTP over a local Wi-Fi network may not expose crypto.randomUUID.
 const newId = () =>
   globalThis.crypto?.randomUUID?.() ??
-  `demo-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  `local-${Date.now()}-${Math.random().toString(36).slice(2)}`;
 const timeNow = () =>
   new Intl.DateTimeFormat("uz-UZ", {
     hour: "2-digit",
@@ -53,70 +65,133 @@ const timeNow = () =>
   }).format(new Date());
 
 export function DemoProvider({ children }: { children: ReactNode }) {
+  const { status } = useSession();
   const [data, setData] = useState<DemoState | null>(null);
   const [error, setError] = useState(false);
   const [attempt, setAttempt] = useState(0);
+  const [actionError, setActionError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (status !== "authenticated") return;
     let active = true;
     Promise.all([
       getCurrentUser(),
       getPosts(),
       getConversations(),
       getMessages(),
+      getGeneralMessages(),
       getPeers(),
       getCommunity(),
     ])
-      .then(([user, posts, conversations, messages, peers, community]) => {
-        if (active) {
-          setData({ user, posts, conversations, messages, peers, community });
+      .then(
+        ([
+          user,
+          posts,
+          conversations,
+          directMessages,
+          generalMessages,
+          peers,
+          community,
+        ]) => {
+          if (!active) return;
+          const lastGeneral = generalMessages[generalMessages.length - 1];
+          const generalConversation: Conversation = {
+            id: GENERAL_CHANNEL_ID,
+            peer: {
+              id: GENERAL_CHANNEL_ID,
+              name: "# general",
+              username: "",
+              avatar: "",
+              skills: [],
+              online: false,
+              bio: "Hammaga ochiq kanal",
+              project: { name: "", description: "" },
+            },
+            isGroup: true,
+            lastMessage: lastGeneral?.text ?? "Hali xabar yo‘q",
+            time: lastGeneral?.time ?? "",
+            unread: 0,
+          };
+          setData({
+            user,
+            posts,
+            conversations: [generalConversation, ...conversations],
+            messages: [...directMessages, ...generalMessages],
+            peers,
+            community,
+          });
           setError(false);
-        }
-      })
+        },
+      )
       .catch(() => {
         if (active) setError(true);
       });
     return () => {
       active = false;
     };
-  }, [attempt]);
+  }, [status, attempt]);
 
-  const markRead = useCallback((conversationId: string) => {
-    setData((prev) => {
-      if (
-        !prev ||
-        !prev.conversations.some((c) => c.id === conversationId && c.unread > 0)
-      )
-        return prev;
-      return {
-        ...prev,
-        conversations: prev.conversations.map((c) =>
-          c.id === conversationId ? { ...c, unread: 0 } : c,
-        ),
-      };
-    });
-  }, []);
+  const markRead = useCallback(
+    (conversationId: string) => {
+      setData((prev) => {
+        if (
+          !prev ||
+          !prev.conversations.some(
+            (c) => c.id === conversationId && c.unread > 0,
+          )
+        )
+          return prev;
+        return {
+          ...prev,
+          conversations: prev.conversations.map((c) =>
+            c.id === conversationId ? { ...c, unread: 0 } : c,
+          ),
+        };
+      });
+      if (conversationId === GENERAL_CHANNEL_ID) return;
+      const conversation = data?.conversations.find(
+        (c) => c.id === conversationId,
+      );
+      if (conversation && !conversation.isGroup) {
+        markConversationRead(conversation.peer.id).catch(() => {});
+      }
+    },
+    [data],
+  );
 
-  if (!data)
+  if (status === "loading" || (status === "authenticated" && !data && !error))
     return (
       <div className="loading-screen" role="status">
         <span className="loading-mark">21</span>
-        <p>
-          {error
-            ? "Ma’lumotlarni yuklab bo‘lmadi."
-            : "Davrangiz tayyorlanmoqda…"}
-        </p>
-        {error && (
-          <button
-            className="button button-primary"
-            onClick={() => {
-              setError(false);
-              setAttempt((n) => n + 1);
-            }}
-          >
-            Qayta urinish
-          </button>
-        )}
+        <p>Davrangiz tayyorlanmoqda…</p>
+      </div>
+    );
+
+  if (status === "unauthenticated")
+    return (
+      <div className="loading-screen" role="status">
+        <span className="loading-mark">21</span>
+        <p>Davom etish uchun tizimga kiring.</p>
+        <a className="button button-primary" href="/login">
+          Kirishga o‘tish
+        </a>
+      </div>
+    );
+
+  if (error || !data)
+    return (
+      <div className="loading-screen" role="status">
+        <span className="loading-mark">21</span>
+        <p>Ma’lumotlarni yuklab bo‘lmadi.</p>
+        <button
+          className="button button-primary"
+          onClick={() => {
+            setError(false);
+            setAttempt((n) => n + 1);
+          }}
+        >
+          Qayta urinish
+        </button>
       </div>
     );
 
@@ -134,80 +209,107 @@ export function DemoProvider({ children }: { children: ReactNode }) {
 
   const value: DemoContextValue = {
     ...data,
-    addPost(text, skill, image) {
+    async addPost(text, skill, image) {
       if (!text.trim()) return;
-      const id = newId();
-      setData(
-        (prev) =>
-          prev && {
-            ...prev,
-            posts: [
-              {
-                id,
-                author: prev.user,
-                text: text.trim(),
-                skill,
-                image,
-                time: "Hozirgina",
-                likes: 0,
-                liked: false,
-                saved: false,
-                comments: [],
-              },
-              ...prev.posts,
-            ],
-          },
-      );
+      const post = await apiSendPost(text.trim(), skill, image);
+      setData((prev) => prev && { ...prev, posts: [post, ...prev.posts] });
     },
     toggleLike(id) {
+      const previous = data.posts.find((post) => post.id === id);
+      if (!previous) return;
       updatePost(id, (post) => ({
         ...post,
         liked: !post.liked,
         likes: post.likes + (post.liked ? -1 : 1),
       }));
+      toggleLikePost(id).catch(() => {
+        updatePost(id, () => previous);
+        setActionError("Like bosishda xatolik yuz berdi.");
+      });
     },
     toggleSave(id) {
+      const previous = data.posts.find((post) => post.id === id);
+      if (!previous) return;
       updatePost(id, (post) => ({ ...post, saved: !post.saved }));
+      toggleSavePost(id).catch(() => {
+        updatePost(id, () => previous);
+        setActionError("Saqlashda xatolik yuz berdi.");
+      });
     },
     addComment(id, text) {
       if (!text.trim()) return;
-      const comment = {
-        id: newId(),
-        author: data.user,
-        text: text.trim(),
-        time: "Hozirgina",
-      };
-      updatePost(id, (post) => ({
-        ...post,
-        comments: [...post.comments, comment],
-      }));
+      apiSendComment(id, text.trim())
+        .then((comment) => {
+          updatePost(id, (post) => ({
+            ...post,
+            comments: [...post.comments, comment],
+          }));
+        })
+        .catch(() => {
+          setActionError("Komment qo‘shishda xatolik yuz berdi.");
+        });
     },
     sendMessage(conversationId, text) {
-      if (!text.trim()) return;
-      const id = newId();
+      const trimmed = text.trim();
+      if (!trimmed) return;
+      const tempId = newId();
       const time = timeNow();
-      setData((prev) => {
-        if (!prev || !prev.conversations.some((c) => c.id === conversationId))
-          return prev;
-        return {
-          ...prev,
-          messages: [
-            ...prev.messages,
-            {
-              id,
-              conversationId,
-              senderId: prev.user.id,
-              text: text.trim(),
-              time,
-            },
-          ],
-          conversations: prev.conversations.map((c) =>
-            c.id === conversationId
-              ? { ...c, lastMessage: text.trim(), time, unread: 0 }
-              : c,
-          ),
-        };
-      });
+      const conversation = data.conversations.find(
+        (c) => c.id === conversationId,
+      );
+      setData(
+        (prev) =>
+          prev && {
+            ...prev,
+            messages: [
+              ...prev.messages,
+              {
+                id: tempId,
+                conversationId,
+                senderId: prev.user.id,
+                text: trimmed,
+                time,
+              },
+            ],
+            conversations: prev.conversations.map((c) =>
+              c.id === conversationId
+                ? { ...c, lastMessage: trimmed, time, unread: 0 }
+                : c,
+            ),
+          },
+      );
+      // Client-only groups (created via createGroup) have no backend
+      // thread to sync with; the optimistic message above is final.
+      if (conversation?.isGroup && conversationId !== GENERAL_CHANNEL_ID)
+        return;
+
+      const request =
+        conversationId === GENERAL_CHANNEL_ID
+          ? sendGeneralMessage(trimmed)
+          : sendDirectMessage(conversation?.peer.id ?? conversationId, trimmed);
+
+      request
+        .then((real) => {
+          setData(
+            (prev) =>
+              prev && {
+                ...prev,
+                messages: prev.messages.map((m) =>
+                  m.id === tempId ? real : m,
+                ),
+              },
+          );
+        })
+        .catch(() => {
+          setData(
+            (prev) =>
+              prev && {
+                ...prev,
+                messages: prev.messages.filter((m) => m.id !== tempId),
+              },
+          );
+          setActionError("Xabar yuborishda xatolik yuz berdi.");
+        });
     },
     markRead,
     createGroup(name, memberIds) {
@@ -242,28 +344,44 @@ export function DemoProvider({ children }: { children: ReactNode }) {
       });
       return id;
     },
-    updateProfile(profile) {
-      setData((prev) => {
-        if (!prev) return prev;
-        const user = { ...prev.user, ...profile };
-        return {
-          ...prev,
-          user,
-          posts: prev.posts.map((post) => ({
-            ...post,
-            author: post.author.id === user.id ? user : post.author,
-            comments: post.comments.map((comment) =>
-              comment.author.id === user.id
-                ? { ...comment, author: user }
-                : comment,
-            ),
-          })),
-        };
-      });
+    async updateProfile(profile) {
+      const updated = await updateMyProfile(profile);
+      setData(
+        (prev) =>
+          prev && {
+            ...prev,
+            user: updated,
+            posts: prev.posts.map((post) => ({
+              ...post,
+              author: post.author.id === updated.id ? updated : post.author,
+              comments: post.comments.map((comment) =>
+                comment.author.id === updated.id
+                  ? { ...comment, author: updated }
+                  : comment,
+              ),
+            })),
+          },
+      );
     },
   };
 
-  return <DemoContext.Provider value={value}>{children}</DemoContext.Provider>;
+  return (
+    <DemoContext.Provider value={value}>
+      {actionError && (
+        <div className="action-error-banner" role="alert">
+          <span>{actionError}</span>
+          <button
+            className="icon-button small-icon"
+            onClick={() => setActionError(null)}
+            aria-label="Yopish"
+          >
+            <X size={15} />
+          </button>
+        </div>
+      )}
+      {children}
+    </DemoContext.Provider>
+  );
 }
 
 export function useDemo() {

@@ -149,6 +149,72 @@ main {
   width: min(1140px, calc(100% - 80px));
   margin-inline: auto;
 }
+@keyframes intro-overlay-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+@keyframes intro-mark-in {
+  from {
+    opacity: 0;
+    transform: scale(0.7);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+@keyframes intro-word-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.intro-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  background: var(--background);
+}
+.intro-overlay.leaving {
+  animation: intro-overlay-out 0.4s ease both;
+  pointer-events: none;
+}
+.intro-overlay-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  width: 84px;
+  height: 84px;
+  border-radius: 14px;
+  background: var(--primary);
+  color: var(--on-primary);
+  font-family: var(--font-display);
+  font-size: 34px;
+  font-weight: 700;
+  animation: intro-mark-in 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.intro-overlay-word {
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 500;
+  letter-spacing: -0.3px;
+  color: var(--text);
+  animation: intro-word-in 0.5s ease 0.2s both;
+}
 @keyframes feed-page-in {
   from {
     opacity: 0;
@@ -778,6 +844,34 @@ main {
   font-size: 12px;
   margin-bottom: 14px;
   background: var(--surface-secondary);
+}
+@keyframes action-error-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -8px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+.action-error-banner {
+  position: fixed;
+  top: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 80;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  max-width: min(92vw, 420px);
+  border: 1px solid var(--strong-border);
+  border-radius: 8px;
+  padding: 10px 10px 10px 14px;
+  font-size: 12px;
+  background: var(--surface);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+  animation: action-error-in 0.25s ease both;
 }
 .comments-section {
   border-top: 1px solid var(--border);
@@ -1511,6 +1605,13 @@ main {
   padding: 12px 15px 9px;
   max-width: 78%;
   min-width: 86px;
+}
+.chat-bubble-sender {
+  display: block;
+  font-size: 10px;
+  font-weight: 650;
+  color: var(--muted);
+  margin-bottom: 3px;
 }
 .chat-bubble p {
   font-size: 12px;

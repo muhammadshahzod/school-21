@@ -1,7 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { DemoProvider } from "@/components/DemoProvider";
-import Header from "@/components/Header";
-import BottomNav from "@/components/BottomNav";
+import IntroOverlay from "@/components/IntroOverlay";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -33,11 +31,8 @@ export default function RootLayout({
         <a href="#main-content" className="skip-link">
           Asosiy mazmunga o‘tish
         </a>
-        <DemoProvider>
-          <Header />
-          <main id="main-content">{children}</main>
-          <BottomNav />
-        </DemoProvider>
+        <IntroOverlay />
+        {children}
       </body>
     </html>
   );

@@ -79,11 +79,12 @@ model Comment {
 model Message {
   id         String   @id @default(cuid())
   senderId   String
-  receiverId String
+  receiverId String?
+  channel    String?
   content    String
   read       Boolean  @default(false)
   createdAt  DateTime @default(now())
 
-  sender   User @relation("SentMessages", fields: [senderId], references: [id], onDelete: Cascade)
-  receiver User @relation("ReceivedMessages", fields: [receiverId], references: [id], onDelete: Cascade)
+  sender   User  @relation("SentMessages", fields: [senderId], references: [id], onDelete: Cascade)
+  receiver User? @relation("ReceivedMessages", fields: [receiverId], references: [id], onDelete: Cascade)
 }

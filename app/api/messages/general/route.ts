@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
+const GENERAL_CHANNEL = "general";
+
 export async function GET() {
   try {
     const session = await auth();
@@ -10,18 +12,15 @@ export async function GET() {
     }
 
     const messages = await prisma.message.findMany({
-      where: {
-        channel: null,
-        OR: [{ senderId: session.user.id }, { receiverId: session.user.id }],
-      },
+      where: { channel: GENERAL_CHANNEL },
       orderBy: { createdAt: "asc" },
     });
 
     return NextResponse.json(messages);
   } catch (error) {
-    console.error("GET /api/messages error:", error);
+    console.error("GET /api/messages/general error:", error);
     return NextResponse.json(
-      { error: "Xabarlarni olishda xatolik yuz berdi" },
+      { error: "Umumiy xabarlarni olishda xatolik yuz berdi" },
       { status: 500 }
     );
   }
@@ -34,14 +33,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Ruxsat yo'q" }, { status: 401 });
     }
 
-    const { receiverId, content } = await request.json();
-
-    if (!receiverId || typeof receiverId !== "string") {
-      return NextResponse.json(
-        { error: "receiverId maydoni majburiy" },
-        { status: 400 }
-      );
-    }
+    const { content } = await request.json();
     if (!content || typeof content !== "string" || !content.trim()) {
       return NextResponse.json(
         { error: "content maydoni majburiy" },
@@ -49,27 +41,18 @@ export async function POST(request: Request) {
       );
     }
 
-    const receiver = await prisma.user.findUnique({
-      where: { id: receiverId },
-    });
-    if (!receiver) {
-      return NextResponse.json(
-        { error: "Qabul qiluvchi foydalanuvchi topilmadi" },
-        { status: 404 }
-      );
-    }
-
     const message = await prisma.message.create({
       data: {
         senderId: session.user.id,
-        receiverId,
+        receiverId: null,
+        channel: GENERAL_CHANNEL,
         content: content.trim(),
       },
     });
 
     return NextResponse.json(message, { status: 201 });
   } catch (error) {
-    console.error("POST /api/messages error:", error);
+    console.error("POST /api/messages/general error:", error);
     return NextResponse.json(
       { error: "Xabar yuborishda xatolik yuz berdi" },
       { status: 500 }

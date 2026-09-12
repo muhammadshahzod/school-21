@@ -15,9 +15,11 @@ import Avatar from "@/components/Avatar";
 import ChatBubble from "@/components/ChatBubble";
 import GroupCreateModal from "@/components/GroupCreateModal";
 import { useDemo } from "@/components/DemoProvider";
+import { GENERAL_CHANNEL_ID } from "@/lib/api";
 
 function ChatContent() {
-  const { conversations, messages, user, sendMessage, markRead } = useDemo();
+  const { conversations, messages, peers, user, sendMessage, markRead } =
+    useDemo();
   const params = useSearchParams();
   const peerId = params.get("peer");
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -41,6 +43,16 @@ function ChatContent() {
   const messageList = useRef<HTMLDivElement>(null);
   const selectedVisible = mobileOpen || Boolean(requested);
   const draft = drafts[selected?.id] ?? "";
+  const isGeneral = selected?.id === GENERAL_CHANNEL_ID;
+
+  function senderName(senderId: string) {
+    if (senderId === user.id) return user.name;
+    return (
+      peers.find((peer) => peer.id === senderId)?.name ??
+      selected?.members?.find((member) => member.id === senderId)?.name ??
+      "Foydalanuvchi"
+    );
+  }
 
   useEffect(() => {
     if (!selected) return;
@@ -173,16 +185,18 @@ function ChatContent() {
               <div>
                 <h2>{selected.peer.name}</h2>
                 <span className="small muted">
-                  {selected.isGroup
-                    ? `${selected.members?.length ?? 0} a’zo`
-                    : selected.peer.online
-                      ? "Hozir onlayn"
-                      : "Hozir oflayn"}
+                  {isGeneral
+                    ? "Hammaga ochiq"
+                    : selected.isGroup
+                      ? `${selected.members?.length ?? 0} a’zo`
+                      : selected.peer.online
+                        ? "Hozir onlayn"
+                        : "Hozir oflayn"}
                 </span>
               </div>
               {selected.isGroup ? (
                 <span className="tag chat-peer-skill">
-                  <Users size={13} /> Guruh
+                  <Users size={13} /> {isGeneral ? "Kanal" : "Guruh"}
                 </span>
               ) : (
                 <span className="tag chat-peer-skill">
@@ -205,6 +219,9 @@ function ChatContent() {
                   key={message.id}
                   message={message}
                   isOwn={message.senderId === user.id}
+                  senderName={
+                    selected.isGroup ? senderName(message.senderId) : undefined
+                  }
                 />
               ))}
               {visibleMessages.length === 0 && (

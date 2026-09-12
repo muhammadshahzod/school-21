@@ -12,7 +12,10 @@ export async function GET() {
     const myId = session.user.id;
 
     const messages = await prisma.message.findMany({
-      where: { OR: [{ senderId: myId }, { receiverId: myId }] },
+      where: {
+        channel: null,
+        OR: [{ senderId: myId }, { receiverId: myId }],
+      },
       orderBy: { createdAt: "desc" },
       include: {
         sender: { select: peerSelect },
@@ -43,7 +46,9 @@ export async function GET() {
     for (const message of messages) {
       const isMine = message.senderId === myId;
       const peer = isMine ? message.receiver : message.sender;
-      if (conversations.has(peer.id)) continue;
+      // channel: null above guarantees a receiver for 1-1 messages, but
+      // Prisma's static type still allows null since the column is nullable.
+      if (!peer || conversations.has(peer.id)) continue;
 
       conversations.set(peer.id, {
         id: peer.id,
