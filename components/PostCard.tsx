@@ -7,7 +7,13 @@ import PostImage from "./PostImage";
 import { useDemo } from "./DemoProvider";
 import type { Post } from "./types";
 
-export default function PostCard({ post }: { post: Post }) {
+export default function PostCard({
+  post,
+  index = 0,
+}: {
+  post: Post;
+  index?: number;
+}) {
   const { user, toggleLike, toggleSave, addComment } = useDemo();
   const [commentsOpen, setCommentsOpen] = useState(false);
   const [comment, setComment] = useState("");
@@ -21,7 +27,10 @@ export default function PostCard({ post }: { post: Post }) {
   }
 
   return (
-    <article className="post-card">
+    <article
+      className="post-card"
+      style={{ "--card-index": index } as React.CSSProperties}
+    >
       <div className="post-header">
         <div className="post-author">
           <Avatar user={post.author} />

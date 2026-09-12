@@ -149,6 +149,19 @@ main {
   width: min(1140px, calc(100% - 80px));
   margin-inline: auto;
 }
+@keyframes feed-page-in {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.feed-page {
+  animation: feed-page-in 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
 .muted {
   color: var(--muted);
 }
@@ -626,6 +639,8 @@ main {
   border: 1px solid var(--border);
   border-radius: 8px;
   overflow: hidden;
+  animation: feed-page-in 0.45s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation-delay: min(calc(var(--card-index, 0) * 60ms), 480ms);
 }
 .post-header {
   display: flex;
@@ -1173,6 +1188,46 @@ main {
   padding-top: 20px;
   margin-top: 2px;
 }
+.group-fieldset {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  min-width: 0;
+}
+.group-fieldset > legend {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 500;
+  font-size: 12px;
+  padding: 0;
+  margin-bottom: 8px;
+}
+.group-member-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 240px;
+  overflow-y: auto;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 6px;
+}
+.group-member-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 9px;
+  border-radius: 6px;
+  font-size: 12px;
+  cursor: pointer;
+}
+.group-member-option:hover {
+  background: var(--subtle-bg, rgba(0, 0, 0, 0.04));
+}
+.group-member-option input {
+  accent-color: var(--text);
+}
 .form-error {
   padding: 10px 12px;
   background: var(--surface-secondary);
@@ -1257,6 +1312,9 @@ main {
 }
 .conversation-list-heading {
   padding: 23px 22px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 .conversation-list-heading h2 {
   display: flex;

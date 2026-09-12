@@ -6,11 +6,14 @@ import {
   MessageCircle,
   Search,
   Send,
+  Users,
+  UserPlus,
 } from "lucide-react";
 import { Suspense, useEffect, useRef, useState, type FormEvent } from "react";
 import { useSearchParams } from "next/navigation";
 import Avatar from "@/components/Avatar";
 import ChatBubble from "@/components/ChatBubble";
+import GroupCreateModal from "@/components/GroupCreateModal";
 import { useDemo } from "@/components/DemoProvider";
 
 function ChatContent() {
@@ -21,6 +24,7 @@ function ChatContent() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [drafts, setDrafts] = useState<Record<string, string>>({});
+  const [creatingGroup, setCreatingGroup] = useState(false);
   const requested = conversations.find((c) => c.peer.id === peerId);
   const selected =
     conversations.find((c) => c.id === selectedId) ??
@@ -80,6 +84,14 @@ function ChatContent() {
             <h2>
               Xabarlar<span>{conversations.length}</span>
             </h2>
+            <button
+              className="icon-button"
+              onClick={() => setCreatingGroup(true)}
+              aria-label="Yangi guruh yaratish"
+              title="Guruh yaratish"
+            >
+              <UserPlus size={19} />
+            </button>
           </div>
           <div className="chat-search search-field">
             <Search size={17} />
@@ -153,16 +165,30 @@ function ChatContent() {
               >
                 <ArrowLeft size={20} />
               </button>
-              <Avatar user={selected.peer} size="sm" showStatus />
+              <Avatar
+                user={selected.peer}
+                size="sm"
+                showStatus={!selected.isGroup}
+              />
               <div>
                 <h2>{selected.peer.name}</h2>
                 <span className="small muted">
-                  {selected.peer.online ? "Hozir onlayn" : "Hozir oflayn"}
+                  {selected.isGroup
+                    ? `${selected.members?.length ?? 0} a’zo`
+                    : selected.peer.online
+                      ? "Hozir onlayn"
+                      : "Hozir oflayn"}
                 </span>
               </div>
-              <span className="tag chat-peer-skill">
-                {selected.peer.skills[0]}
-              </span>
+              {selected.isGroup ? (
+                <span className="tag chat-peer-skill">
+                  <Users size={13} /> Guruh
+                </span>
+              ) : (
+                <span className="tag chat-peer-skill">
+                  {selected.peer.skills[0]}
+                </span>
+              )}
             </header>
             <div
               className="messages-scroll"
@@ -230,6 +256,15 @@ function ChatContent() {
           </div>
         )}
       </div>
+      {creatingGroup && (
+        <GroupCreateModal
+          onClose={() => setCreatingGroup(false)}
+          onCreated={(id) => {
+            setSelectedId(id);
+            setMobileOpen(true);
+          }}
+        />
+      )}
     </div>
   );
 }

@@ -125,8 +125,8 @@ export default function FeedPage() {
             </div>
           )}
           <div className="post-list">
-            {filteredPosts.map((post) => (
-              <PostCard key={post.id} post={post} />
+            {filteredPosts.map((post, index) => (
+              <PostCard key={post.id} post={post} index={index} />
             ))}
           </div>
           {filteredPosts.length === 0 ? (

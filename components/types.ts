@@ -40,7 +40,11 @@ export interface Post {
 
 export interface Conversation {
   id: string;
+  // For a group, `peer` is a synthetic display identity (name = group
+  // name, avatar = group icon) so existing 1-1 rendering keeps working.
   peer: Peer;
+  isGroup?: boolean;
+  members?: Peer[];
   lastMessage: string;
   time: string;
   unread: number;

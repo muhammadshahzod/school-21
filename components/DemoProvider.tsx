@@ -34,6 +34,7 @@ interface DemoContextValue extends DemoState {
   addComment: (id: string, text: string) => void;
   sendMessage: (conversationId: string, text: string) => void;
   markRead: (conversationId: string) => void;
+  createGroup: (name: string, memberIds: string[]) => string;
   updateProfile: (
     profile: Pick<Peer, "name" | "bio" | "skills" | "project">,
   ) => void;
@@ -209,6 +210,38 @@ export function DemoProvider({ children }: { children: ReactNode }) {
       });
     },
     markRead,
+    createGroup(name, memberIds) {
+      const id = newId();
+      const trimmed = name.trim() || "Nomsiz guruh";
+      setData((prev) => {
+        if (!prev) return prev;
+        const members = [
+          prev.user,
+          ...prev.peers.filter((peer) => memberIds.includes(peer.id)),
+        ];
+        const groupPeer: Peer = {
+          id,
+          name: trimmed,
+          username: "",
+          avatar: "",
+          skills: [],
+          online: false,
+          bio: `${members.length} a’zo`,
+          project: { name: "", description: "" },
+        };
+        const conversation: Conversation = {
+          id,
+          peer: groupPeer,
+          isGroup: true,
+          members,
+          lastMessage: "Guruh yaratildi",
+          time: timeNow(),
+          unread: 0,
+        };
+        return { ...prev, conversations: [conversation, ...prev.conversations] };
+      });
+      return id;
+    },
     updateProfile(profile) {
       setData((prev) => {
         if (!prev) return prev;
