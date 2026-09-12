@@ -77,6 +77,11 @@ export async function POST(request: Request) {
     );
     const row = rows[0];
 
+    await pool.query(
+      `INSERT INTO app_notifications (id, user_id, actor_id, type) VALUES ($1, $2, $3, 'message')`,
+      [genId("n"), receiverId, session.user.id]
+    );
+
     return NextResponse.json(
       {
         id: row.id,

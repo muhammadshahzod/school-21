@@ -60,7 +60,7 @@ export async function POST(
     }
 
     const { rows: postRows } = await pool.query(
-      `SELECT id FROM app_posts WHERE id = $1`,
+      `SELECT id, author_id FROM app_posts WHERE id = $1`,
       [postId]
     );
     if (postRows.length === 0) {
@@ -72,6 +72,15 @@ export async function POST(
       `INSERT INTO app_comments (id, post_id, user_id, content) VALUES ($1, $2, $3, $4)`,
       [id, postId, session.user.id, content.trim()]
     );
+
+    const authorId = postRows[0].author_id;
+    if (authorId !== session.user.id) {
+      await pool.query(
+        `INSERT INTO app_notifications (id, user_id, actor_id, type, post_id)
+         VALUES ($1, $2, $3, 'comment', $4)`,
+        [genId("n"), authorId, session.user.id, postId]
+      );
+    }
 
     const { rows: userRows } = await pool.query(
       `SELECT * FROM app_users WHERE id = $1`,

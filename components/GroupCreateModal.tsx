@@ -16,6 +16,8 @@ export default function GroupCreateModal({
   const { peers, createGroup } = useDemo();
   const [name, setName] = useState("");
   const [selected, setSelected] = useState<string[]>([]);
+  const [error, setError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
   function toggle(id: string) {
     setSelected((prev) =>
@@ -23,12 +25,19 @@ export default function GroupCreateModal({
     );
   }
 
-  function submit(event: FormEvent) {
+  async function submit(event: FormEvent) {
     event.preventDefault();
-    if (!name.trim() || selected.length === 0) return;
-    const id = createGroup(name, selected);
-    onCreated?.(id);
-    onClose();
+    if (!name.trim() || selected.length === 0 || submitting) return;
+    setSubmitting(true);
+    setError("");
+    try {
+      const id = await createGroup(name, selected);
+      onCreated?.(id);
+      onClose();
+    } catch {
+      setError("Guruh yaratishda xatolik yuz berdi.");
+      setSubmitting(false);
+    }
   }
 
   return (
@@ -71,6 +80,11 @@ export default function GroupCreateModal({
             <p className="muted small">Hozircha pirlar topilmadi.</p>
           )}
         </fieldset>
+        {error && (
+          <p className="form-error" role="alert">
+            {error}
+          </p>
+        )}
         <div className="modal-footer">
           <button
             type="button"
@@ -82,9 +96,10 @@ export default function GroupCreateModal({
           <button
             className="button button-primary"
             type="submit"
-            disabled={!name.trim() || selected.length === 0}
+            disabled={!name.trim() || selected.length === 0 || submitting}
           >
-            Guruh ochish <ArrowUpRight size={17} />
+            {submitting ? "Ochilmoqda…" : "Guruh ochish"}
+            {!submitting && <ArrowUpRight size={17} />}
           </button>
         </div>
       </form>

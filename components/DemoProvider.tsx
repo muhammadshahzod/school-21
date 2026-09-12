@@ -12,21 +12,28 @@ import { useSession } from "next-auth/react";
 import { X } from "lucide-react";
 import {
   GENERAL_CHANNEL_ID,
+  createGroupApi,
   getCommunity,
   getConversations,
   getCurrentUser,
   getGeneralMessages,
+  getGroupMessages,
+  getGroups,
   getMessages,
+  getNotifications,
   getPeers,
   getPosts,
   markConversationRead,
+  markNotificationsRead as apiMarkNotificationsRead,
   sendComment as apiSendComment,
   sendDirectMessage,
   sendGeneralMessage,
+  sendGroupMessage,
   sendPost as apiSendPost,
   toggleLikePost,
   toggleSavePost,
   updateMyProfile,
+  type AppNotification,
 } from "@/lib/api";
 import type { Community, Conversation, Message, Peer, Post } from "./types";
 
@@ -37,6 +44,7 @@ interface DemoState {
   messages: Message[];
   peers: Peer[];
   community: Community;
+  notifications: AppNotification[];
 }
 
 interface DemoContextValue extends DemoState {
@@ -46,7 +54,8 @@ interface DemoContextValue extends DemoState {
   addComment: (id: string, text: string) => void;
   sendMessage: (conversationId: string, text: string) => void;
   markRead: (conversationId: string) => void;
-  createGroup: (name: string, memberIds: string[]) => string;
+  createGroup: (name: string, memberIds: string[]) => Promise<string>;
+  markNotificationsRead: () => void;
   updateProfile: (
     profile: Pick<Peer, "name" | "bio" | "skills" | "project">,
   ) => Promise<void>;
@@ -78,20 +87,26 @@ export function DemoProvider({ children }: { children: ReactNode }) {
       getCurrentUser(),
       getPosts(),
       getConversations(),
+      getGroups(),
       getMessages(),
       getGeneralMessages(),
+      getGroupMessages(),
       getPeers(),
       getCommunity(),
+      getNotifications(),
     ])
       .then(
         ([
           user,
           posts,
           conversations,
+          groups,
           directMessages,
           generalMessages,
+          groupMessages,
           peers,
           community,
+          notifications,
         ]) => {
           if (!active) return;
           const lastGeneral = generalMessages[generalMessages.length - 1];
@@ -115,10 +130,11 @@ export function DemoProvider({ children }: { children: ReactNode }) {
           setData({
             user,
             posts,
-            conversations: [generalConversation, ...conversations],
-            messages: [...directMessages, ...generalMessages],
+            conversations: [generalConversation, ...groups, ...conversations],
+            messages: [...directMessages, ...generalMessages, ...groupMessages],
             peers,
             community,
+            notifications,
           });
           setError(false);
         },
@@ -278,15 +294,13 @@ export function DemoProvider({ children }: { children: ReactNode }) {
             ),
           },
       );
-      // Client-only groups (created via createGroup) have no backend
-      // thread to sync with; the optimistic message above is final.
-      if (conversation?.isGroup && conversationId !== GENERAL_CHANNEL_ID)
-        return;
 
       const request =
         conversationId === GENERAL_CHANNEL_ID
           ? sendGeneralMessage(trimmed)
-          : sendDirectMessage(conversation?.peer.id ?? conversationId, trimmed);
+          : conversation?.isGroup
+            ? sendGroupMessage(conversationId, trimmed)
+            : sendDirectMessage(conversation?.peer.id ?? conversationId, trimmed);
 
       request
         .then((real) => {
@@ -312,37 +326,26 @@ export function DemoProvider({ children }: { children: ReactNode }) {
         });
     },
     markRead,
-    createGroup(name, memberIds) {
-      const id = newId();
-      const trimmed = name.trim() || "Nomsiz guruh";
-      setData((prev) => {
-        if (!prev) return prev;
-        const members = [
-          prev.user,
-          ...prev.peers.filter((peer) => memberIds.includes(peer.id)),
-        ];
-        const groupPeer: Peer = {
-          id,
-          name: trimmed,
-          username: "",
-          avatar: "",
-          skills: [],
-          online: false,
-          bio: `${members.length} a’zo`,
-          project: { name: "", description: "" },
-        };
-        const conversation: Conversation = {
-          id,
-          peer: groupPeer,
-          isGroup: true,
-          members,
-          lastMessage: "Guruh yaratildi",
-          time: timeNow(),
-          unread: 0,
-        };
-        return { ...prev, conversations: [conversation, ...prev.conversations] };
-      });
-      return id;
+    async createGroup(name, memberIds) {
+      const conversation = await createGroupApi(name, memberIds);
+      setData(
+        (prev) =>
+          prev && {
+            ...prev,
+            conversations: [conversation, ...prev.conversations],
+          },
+      );
+      return conversation.id;
+    },
+    markNotificationsRead() {
+      setData(
+        (prev) =>
+          prev && {
+            ...prev,
+            notifications: prev.notifications.map((n) => ({ ...n, read: true })),
+          },
+      );
+      apiMarkNotificationsRead().catch(() => {});
     },
     async updateProfile(profile) {
       const updated = await updateMyProfile(profile);

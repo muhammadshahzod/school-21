@@ -1,4 +1,5 @@
 import pg from "pg";
+import bcrypt from "bcryptjs";
 
 const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL });
 
@@ -292,14 +293,19 @@ async function main() {
   await ensureSchema();
 
   for (const u of users) {
+    // Only used on a fresh database; existing rows keep whatever password
+    // they already have (e.g. changed via the admin panel) instead of
+    // being reset back to the seed default on re-run.
+    const { rows: existing } = await pool.query(
+      `SELECT id FROM app_users WHERE id = $1`,
+      [u.id]
+    );
+    if (existing.length > 0) continue;
+    const hashed = await bcrypt.hash(u.password, 10);
     await pool.query(
       `INSERT INTO app_users (id, username, password, name, image, bio, skills, project_title, project_description)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
-       ON CONFLICT (id) DO UPDATE SET
-         username = EXCLUDED.username, password = EXCLUDED.password, name = EXCLUDED.name,
-         image = EXCLUDED.image, bio = EXCLUDED.bio, skills = EXCLUDED.skills,
-         project_title = EXCLUDED.project_title, project_description = EXCLUDED.project_description`,
-      [u.id, u.username, u.password, u.name, u.image, u.bio, u.skills, u.projectTitle, u.projectDescription]
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
+      [u.id, u.username, hashed, u.name, u.image, u.bio, u.skills, u.projectTitle, u.projectDescription]
     );
   }
   console.log(`Foydalanuvchilar: ${users.length} ta tayyor.`);

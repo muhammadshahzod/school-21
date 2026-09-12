@@ -103,12 +103,34 @@ export function ensureSchema(): Promise<void> {
         content TEXT NOT NULL,
         created_at TIMESTAMPTZ NOT NULL DEFAULT now()
       );
+      CREATE TABLE IF NOT EXISTS app_groups (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        created_by TEXT NOT NULL REFERENCES app_users(id) ON DELETE CASCADE,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+      );
+      CREATE TABLE IF NOT EXISTS app_group_members (
+        group_id TEXT NOT NULL REFERENCES app_groups(id) ON DELETE CASCADE,
+        user_id TEXT NOT NULL REFERENCES app_users(id) ON DELETE CASCADE,
+        PRIMARY KEY (group_id, user_id)
+      );
       CREATE TABLE IF NOT EXISTS app_messages (
         id TEXT PRIMARY KEY,
         sender_id TEXT NOT NULL REFERENCES app_users(id) ON DELETE CASCADE,
         receiver_id TEXT REFERENCES app_users(id) ON DELETE CASCADE,
         channel TEXT,
         content TEXT NOT NULL,
+        read BOOLEAN NOT NULL DEFAULT false,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+      );
+      ALTER TABLE app_messages
+        ADD COLUMN IF NOT EXISTS group_id TEXT REFERENCES app_groups(id) ON DELETE CASCADE;
+      CREATE TABLE IF NOT EXISTS app_notifications (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL REFERENCES app_users(id) ON DELETE CASCADE,
+        actor_id TEXT NOT NULL REFERENCES app_users(id) ON DELETE CASCADE,
+        type TEXT NOT NULL,
+        post_id TEXT REFERENCES app_posts(id) ON DELETE CASCADE,
         read BOOLEAN NOT NULL DEFAULT false,
         created_at TIMESTAMPTZ NOT NULL DEFAULT now()
       );

@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowUpRight, LogOut, ShieldCheck } from "lucide-react";
+import { ArrowUpRight, Bell, LogOut, ShieldCheck } from "lucide-react";
 import { signOut } from "next-auth/react";
+import { useEffect, useRef, useState } from "react";
 import Avatar from "./Avatar";
 import ThemeToggle from "./ThemeToggle";
 import { useDemo } from "./DemoProvider";
@@ -22,6 +23,72 @@ export function Brand() {
   );
 }
 
+function notificationText(type: string): string {
+  if (type === "like") return "postingizni yoqtirdi";
+  if (type === "comment") return "postingizga izoh qoldirdi";
+  return "sizga xabar yubordi";
+}
+
+function NotificationBell() {
+  const { notifications, markNotificationsRead } = useDemo();
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  const unread = notifications.filter((n) => !n.read).length;
+
+  useEffect(() => {
+    function onDocClick(event: MouseEvent) {
+      if (ref.current && !ref.current.contains(event.target as Node)) {
+        setOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", onDocClick);
+    return () => document.removeEventListener("mousedown", onDocClick);
+  }, []);
+
+  return (
+    <div ref={ref} style={{ position: "relative" }}>
+      <button
+        className="icon-button"
+        aria-label="Bildirishnomalar"
+        title="Bildirishnomalar"
+        onClick={() => {
+          setOpen((v) => !v);
+          if (!open && unread > 0) markNotificationsRead();
+        }}
+      >
+        <Bell size={18} />
+        {unread > 0 && <span className="notification-badge">{unread}</span>}
+      </button>
+      {open && (
+        <div className="notification-dropdown">
+          {notifications.length === 0 ? (
+            <p className="muted small" style={{ padding: 14 }}>
+              Hozircha bildirishnoma yo‘q.
+            </p>
+          ) : (
+            notifications.slice(0, 20).map((n) => (
+              <Link
+                key={n.id}
+                href={n.type === "message" ? `/chat?peer=${n.actor.id}` : "/feed"}
+                className="notification-item"
+                onClick={() => setOpen(false)}
+              >
+                <Avatar user={n.actor} size="sm" />
+                <span>
+                  <strong>{n.actor.name}</strong> {notificationText(n.type)}
+                  {n.postPreview && (
+                    <span className="muted"> — “{n.postPreview}…”</span>
+                  )}
+                </span>
+              </Link>
+            ))
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function Header() {
   const { user } = useDemo();
   return (
@@ -35,6 +102,7 @@ export default function Header() {
         </div>
         <div className="header-actions">
           <ThemeToggle />
+          <NotificationBell />
           {user.username === "shahzod" && (
             <Link href="/admin" className="icon-button" aria-label="Admin panel" title="Admin panel">
               <ShieldCheck size={18} />

@@ -1,11 +1,13 @@
 "use client";
 
-import { ArrowUpRight, ImagePlus } from "lucide-react";
-import { useState, type FormEvent } from "react";
+import { ArrowUpRight, ImagePlus, Upload, X as XIcon } from "lucide-react";
+import { useRef, useState, type FormEvent } from "react";
 import Avatar from "./Avatar";
 import Modal from "./Modal";
 import { useDemo } from "./DemoProvider";
 import { SKILLS } from "./types";
+
+const MAX_IMAGE_BYTES = 2 * 1024 * 1024;
 
 export default function CreatePostModal({
   onClose,
@@ -20,10 +22,28 @@ export default function CreatePostModal({
   const [skill, setSkill] = useState<string>(SKILLS[0]);
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  function handleFile(file: File | undefined) {
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      setError("Faqat rasm fayllari qabul qilinadi.");
+      return;
+    }
+    if (file.size > MAX_IMAGE_BYTES) {
+      setError("Rasm hajmi 2MB dan oshmasligi kerak.");
+      return;
+    }
+    setError("");
+    const reader = new FileReader();
+    reader.onload = () => setImage(String(reader.result));
+    reader.readAsDataURL(file);
+  }
+
   async function submit(event: FormEvent) {
     event.preventDefault();
     if (!text.trim() || submitting) return;
-    if (image.trim()) {
+    if (image.trim() && !image.startsWith("data:")) {
       try {
         if (!["http:", "https:"].includes(new URL(image.trim()).protocol))
           throw new Error();
@@ -72,21 +92,56 @@ export default function CreatePostModal({
         </label>
         <label className="field">
           <span>
-            <ImagePlus size={15} /> Rasm URL{" "}
+            <ImagePlus size={15} /> Rasm{" "}
             <span className="muted">(ixtiyoriy)</span>
           </span>
           <input
             type="url"
-            value={image}
+            value={image.startsWith("data:") ? "" : image}
             onChange={(e) => {
               setImage(e.target.value);
               setError("");
             }}
             placeholder="https://example.com/rasm.jpg"
+            disabled={image.startsWith("data:")}
             aria-describedby={error ? "image-error" : undefined}
             aria-invalid={Boolean(error)}
           />
         </label>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          hidden
+          onChange={(e) => handleFile(e.target.files?.[0])}
+        />
+        <div className="image-upload-row">
+          <button
+            type="button"
+            className="button button-secondary"
+            onClick={() => fileInputRef.current?.click()}
+          >
+            <Upload size={15} />
+            Fayldan yuklash
+          </button>
+          {image.startsWith("data:") && (
+            <div className="image-upload-preview">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={image} alt="Yuklangan rasm" />
+              <button
+                type="button"
+                className="icon-button small-icon"
+                aria-label="Rasmni olib tashlash"
+                onClick={() => {
+                  setImage("");
+                  if (fileInputRef.current) fileInputRef.current.value = "";
+                }}
+              >
+                <XIcon size={16} />
+              </button>
+            </div>
+          )}
+        </div>
         {error && (
           <p id="image-error" className="form-error" role="alert">
             {error}

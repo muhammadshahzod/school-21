@@ -17,7 +17,7 @@ export async function POST(
     const userId = session.user.id;
 
     const { rows: postRows } = await pool.query(
-      `SELECT id FROM app_posts WHERE id = $1`,
+      `SELECT id, author_id FROM app_posts WHERE id = $1`,
       [postId]
     );
     if (postRows.length === 0) {
@@ -38,6 +38,16 @@ export async function POST(
       `INSERT INTO app_likes (id, post_id, user_id) VALUES ($1, $2, $3)`,
       [genId("l"), postId, userId]
     );
+
+    const authorId = postRows[0].author_id;
+    if (authorId !== userId) {
+      await pool.query(
+        `INSERT INTO app_notifications (id, user_id, actor_id, type, post_id)
+         VALUES ($1, $2, $3, 'like', $4)`,
+        [genId("n"), authorId, userId, postId]
+      );
+    }
+
     return NextResponse.json({ liked: true });
   } catch (error) {
     console.error("POST /api/posts/[id]/like error:", error);

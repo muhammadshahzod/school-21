@@ -309,6 +309,123 @@ export async function markConversationRead(peerId: string): Promise<void> {
   await fetchJson(`/api/messages/${peerId}`);
 }
 
+type ApiGroup = {
+  id: string;
+  name: string;
+  members: ApiPerson[];
+  lastMessage: string;
+  time: string;
+};
+
+type ApiGroupMessage = {
+  id: string;
+  senderId: string;
+  groupId: string;
+  content: string;
+  createdAt: string;
+};
+
+function toGroupConversation(g: ApiGroup): Conversation {
+  const members = g.members.map(toPeer);
+  return {
+    id: g.id,
+    peer: {
+      id: g.id,
+      name: g.name,
+      username: "",
+      avatar: "",
+      skills: [],
+      online: false,
+      bio: `${members.length} a'zo`,
+      project: { name: "", description: "" },
+    },
+    isGroup: true,
+    members,
+    lastMessage: g.lastMessage,
+    time: shortTime(g.time),
+    unread: 0,
+  };
+}
+
+export async function getGroups(): Promise<Conversation[]> {
+  const groups = await fetchJson<ApiGroup[]>("/api/groups");
+  return groups.map(toGroupConversation);
+}
+
+export async function createGroupApi(
+  name: string,
+  memberIds: string[]
+): Promise<Conversation> {
+  const group = await sendJson<ApiGroup>("/api/groups", "POST", {
+    name,
+    memberIds,
+  });
+  return toGroupConversation(group);
+}
+
+export async function getGroupMessages(): Promise<Message[]> {
+  const messages = await fetchJson<ApiGroupMessage[]>("/api/groups/messages");
+  return messages.map((m) => ({
+    id: m.id,
+    conversationId: m.groupId,
+    senderId: m.senderId,
+    text: m.content,
+    time: shortTime(m.createdAt),
+  }));
+}
+
+export async function sendGroupMessage(
+  groupId: string,
+  content: string
+): Promise<Message> {
+  const message = await sendJson<ApiGroupMessage>(
+    `/api/groups/${groupId}/messages`,
+    "POST",
+    { content }
+  );
+  return {
+    id: message.id,
+    conversationId: message.groupId,
+    senderId: message.senderId,
+    text: message.content,
+    time: shortTime(message.createdAt),
+  };
+}
+
+export interface AppNotification {
+  id: string;
+  type: "like" | "comment" | "message";
+  read: boolean;
+  createdAt: string;
+  postId: string | null;
+  postPreview: string | null;
+  actor: Peer;
+}
+
+type ApiNotification = {
+  id: string;
+  type: "like" | "comment" | "message";
+  read: boolean;
+  createdAt: string;
+  postId: string | null;
+  postPreview: string | null;
+  actor: ApiPerson;
+};
+
+export async function getNotifications(): Promise<AppNotification[]> {
+  const notifications = await fetchJson<ApiNotification[]>(
+    "/api/notifications"
+  );
+  return notifications.map((n) => ({
+    ...n,
+    actor: toPeer(n.actor),
+  }));
+}
+
+export async function markNotificationsRead(): Promise<void> {
+  await sendJson("/api/notifications/read", "POST");
+}
+
 export async function updateMyProfile(profile: {
   name: string;
   bio: string;

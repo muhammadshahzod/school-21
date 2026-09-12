@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import bcrypt from "bcryptjs";
 import { auth } from "@/lib/auth";
 import { ensureSchema, genId, pool, toPublicUser } from "@/lib/db";
 
@@ -61,9 +62,10 @@ export async function POST(request: Request) {
     }
 
     const id = genId("u");
+    const hashed = await bcrypt.hash(password, 10);
     const { rows } = await pool.query(
       `INSERT INTO app_users (id, username, password, name) VALUES ($1, $2, $3, $4) RETURNING *`,
-      [id, cleanUsername, password, (name || cleanUsername).trim()]
+      [id, cleanUsername, hashed, (name || cleanUsername).trim()]
     );
 
     return NextResponse.json(toPublicUser(rows[0]), { status: 201 });

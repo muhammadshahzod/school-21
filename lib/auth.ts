@@ -1,5 +1,6 @@
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
+import bcrypt from "bcryptjs";
 import { ensureSchema, pool } from "@/lib/db";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
@@ -24,7 +25,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           [username]
         );
         const user = rows[0];
-        if (!user || user.password !== password) return null;
+        if (!user) return null;
+        const valid = await bcrypt.compare(password, user.password);
+        if (!valid) return null;
 
         return { id: user.id, name: user.name, image: user.image || null };
       },
