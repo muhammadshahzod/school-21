@@ -10,6 +10,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     }),
   ],
   secret: process.env.NEXTAUTH_SECRET,
+  // Render (unlike Vercel) isn't auto-detected as a trusted host, so
+  // NextAuth otherwise throws UntrustedHost and shows a generic
+  // "server configuration" error on every request.
+  trustHost: true,
   session: { strategy: "jwt" },
   callbacks: {
     async signIn({ user }) {
