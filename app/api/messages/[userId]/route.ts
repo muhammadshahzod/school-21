@@ -25,6 +25,11 @@ export async function GET(
       orderBy: { createdAt: "asc" },
     });
 
+    await prisma.message.updateMany({
+      where: { senderId: otherUserId, receiverId: myId, read: false },
+      data: { read: true },
+    });
+
     return NextResponse.json(messages);
   } catch (error) {
     console.error("GET /api/messages/[userId] error:", error);

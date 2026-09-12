@@ -33,6 +33,14 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     async session({ session, token }) {
       if (session.user && token.id) {
         session.user.id = token.id as string;
+        try {
+          await prisma.user.update({
+            where: { id: token.id as string },
+            data: { lastActiveAt: new Date() },
+          });
+        } catch {
+          // Presence tracking is best-effort; never block the session on it.
+        }
       }
       return session;
     },

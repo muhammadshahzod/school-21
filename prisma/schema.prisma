@@ -9,15 +9,19 @@ datasource db {
 model User {
   id                 String   @id @default(cuid())
   email              String   @unique
+  username           String?  @unique
   name               String?
   image              String?
+  bio                String?
   skills             String[] @default([])
   projectTitle       String?
   projectDescription String?
+  lastActiveAt       DateTime @default(now())
   createdAt          DateTime @default(now())
 
   posts             Post[]
   likes             Like[]
+  saves             Save[]
   comments          Comment[]
   sentMessages      Message[] @relation("SentMessages")
   receivedMessages  Message[] @relation("ReceivedMessages")
@@ -28,14 +32,28 @@ model Post {
   authorId  String
   content   String
   imageUrl  String?
+  skill     String   @default("Frontend")
   createdAt DateTime @default(now())
 
   author   User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
   likes    Like[]
+  saves    Save[]
   comments Comment[]
 }
 
 model Like {
+  id        String   @id @default(cuid())
+  postId    String
+  userId    String
+  createdAt DateTime @default(now())
+
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([postId, userId])
+}
+
+model Save {
   id        String   @id @default(cuid())
   postId    String
   userId    String
@@ -63,6 +81,7 @@ model Message {
   senderId   String
   receiverId String
   content    String
+  read       Boolean  @default(false)
   createdAt  DateTime @default(now())
 
   sender   User @relation("SentMessages", fields: [senderId], references: [id], onDelete: Cascade)

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { personSelect } from "@/lib/selects";
 
 export async function GET(request: Request) {
   try {
@@ -9,16 +10,7 @@ export async function GET(request: Request) {
     const users = await prisma.user.findMany({
       where: skill ? { skills: { has: skill } } : undefined,
       orderBy: { createdAt: "desc" },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        image: true,
-        skills: true,
-        projectTitle: true,
-        projectDescription: true,
-        createdAt: true,
-      },
+      select: { ...personSelect, email: true, createdAt: true },
     });
 
     return NextResponse.json(users);

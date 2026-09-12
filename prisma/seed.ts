@@ -1,12 +1,16 @@
 import { PrismaClient } from "@prisma/client";
+import { PrismaPg } from "@prisma/adapter-pg";
 
-const prisma = new PrismaClient();
+const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL });
+const prisma = new PrismaClient({ adapter });
 
 const users = [
   {
     email: "aziz.karimov@school21.uz",
+    username: "akarimov",
     name: "Aziz Karimov",
     image: "https://i.pravatar.cc/150?img=11",
+    bio: "Backend va ma'lumotlar bazalari bilan shug'ullanaman.",
     skills: ["Python", "Django", "PostgreSQL"],
     projectTitle: "Smart Attendance",
     projectDescription:
@@ -14,8 +18,10 @@ const users = [
   },
   {
     email: "dilnoza.yusupova@school21.uz",
+    username: "dyusupova",
     name: "Dilnoza Yusupova",
     image: "https://i.pravatar.cc/150?img=32",
+    bio: "Interfeyslarni jonlantiraman, React va TypeScript sevaman.",
     skills: ["React", "TypeScript", "Next.js"],
     projectTitle: "PeerBoard",
     projectDescription:
@@ -23,8 +29,10 @@ const users = [
   },
   {
     email: "jasur.tashkentov@school21.uz",
+    username: "jtashkentov",
     name: "Jasur Tashkentov",
     image: "https://i.pravatar.cc/150?img=15",
+    bio: "Mikroservislar va konteynerlashtirish bo'yicha ishlayman.",
     skills: ["Go", "Docker", "Kubernetes"],
     projectTitle: "MicroDeploy",
     projectDescription:
@@ -32,8 +40,10 @@ const users = [
   },
   {
     email: "malika.rashidova@school21.uz",
+    username: "mrashidova",
     name: "Malika Rashidova",
     image: "https://i.pravatar.cc/150?img=47",
+    bio: "Kompyuter ko'rish va mashinaviy o'rganish bilan qiziqaman.",
     skills: ["C++", "Algorithms", "Machine Learning"],
     projectTitle: "VisionSort",
     projectDescription:
