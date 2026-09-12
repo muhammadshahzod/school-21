@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowUpRight, LogOut } from "lucide-react";
+import { ArrowUpRight, LogOut, ShieldCheck } from "lucide-react";
 import { signOut } from "next-auth/react";
 import Avatar from "./Avatar";
 import ThemeToggle from "./ThemeToggle";
@@ -35,6 +35,11 @@ export default function Header() {
         </div>
         <div className="header-actions">
           <ThemeToggle />
+          {user.username === "shahzod" && (
+            <Link href="/admin" className="icon-button" aria-label="Admin panel" title="Admin panel">
+              <ShieldCheck size={18} />
+            </Link>
+          )}
           <span className="header-divider" />
           <Link
             href="/profile"
