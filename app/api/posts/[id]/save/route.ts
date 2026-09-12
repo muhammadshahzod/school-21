@@ -1,12 +1,13 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
+import { ensureSchema, genId, pool } from "@/lib/db";
 
 export async function POST(
   _request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    await ensureSchema();
     const session = await auth();
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Ruxsat yo'q" }, { status: 401 });
@@ -15,21 +16,28 @@ export async function POST(
     const { id: postId } = await params;
     const userId = session.user.id;
 
-    const post = await prisma.post.findUnique({ where: { id: postId } });
-    if (!post) {
+    const { rows: postRows } = await pool.query(
+      `SELECT id FROM app_posts WHERE id = $1`,
+      [postId]
+    );
+    if (postRows.length === 0) {
       return NextResponse.json({ error: "Post topilmadi" }, { status: 404 });
     }
 
-    const existingSave = await prisma.save.findUnique({
-      where: { postId_userId: { postId, userId } },
-    });
+    const { rows: existing } = await pool.query(
+      `SELECT id FROM app_saves WHERE post_id = $1 AND user_id = $2`,
+      [postId, userId]
+    );
 
-    if (existingSave) {
-      await prisma.save.delete({ where: { id: existingSave.id } });
+    if (existing.length > 0) {
+      await pool.query(`DELETE FROM app_saves WHERE id = $1`, [existing[0].id]);
       return NextResponse.json({ saved: false });
     }
 
-    await prisma.save.create({ data: { postId, userId } });
+    await pool.query(
+      `INSERT INTO app_saves (id, post_id, user_id) VALUES ($1, $2, $3)`,
+      [genId("s"), postId, userId]
+    );
     return NextResponse.json({ saved: true });
   } catch (error) {
     console.error("POST /api/posts/[id]/save error:", error);

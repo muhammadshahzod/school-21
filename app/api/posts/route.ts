@@ -1,33 +1,72 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
+import { ensureSchema, genId, pool, toPublicUser } from "@/lib/db";
 import { isPostSkill } from "@/lib/skills";
-import { personSelect as authorSelect } from "@/lib/selects";
+
+async function getUsersMap() {
+  const { rows } = await pool.query(`SELECT * FROM app_users`);
+  return new Map(rows.map((row) => [row.id, toPublicUser(row)]));
+}
 
 export async function GET() {
   try {
+    await ensureSchema();
     const session = await auth();
     const currentUserId = session?.user?.id;
 
-    const posts = await prisma.post.findMany({
-      orderBy: { createdAt: "desc" },
-      include: {
-        author: { select: authorSelect },
-        _count: { select: { likes: true, comments: true } },
+    const usersMap = await getUsersMap();
+    const { rows: postRows } = await pool.query(
+      `SELECT * FROM app_posts ORDER BY created_at DESC`
+    );
+    const { rows: likeRows } = await pool.query(`SELECT * FROM app_likes`);
+    const { rows: saveRows } = await pool.query(`SELECT * FROM app_saves`);
+    const { rows: commentRows } = await pool.query(
+      `SELECT * FROM app_comments ORDER BY created_at ASC`
+    );
+
+    const posts = postRows.map((post) => {
+      const author = usersMap.get(post.author_id);
+      if (!author) return null;
+
+      const postLikes = likeRows.filter((l) => l.post_id === post.id);
+      const postSaves = saveRows.filter((s) => s.post_id === post.id);
+      const postComments = commentRows
+        .filter((c) => c.post_id === post.id)
+        .map((c) => {
+          const commentAuthor = usersMap.get(c.user_id);
+          if (!commentAuthor) return null;
+          return {
+            id: c.id,
+            content: c.content,
+            createdAt: c.created_at.toISOString(),
+            user: commentAuthor,
+          };
+        })
+        .filter(Boolean);
+
+      return {
+        id: post.id,
+        content: post.content,
+        imageUrl: post.image_url,
+        skill: post.skill,
+        createdAt: post.created_at.toISOString(),
+        author,
+        _count: { likes: postLikes.length, comments: postComments.length },
         likes: currentUserId
-          ? { where: { userId: currentUserId }, select: { id: true } }
-          : false,
+          ? postLikes
+              .filter((l) => l.user_id === currentUserId)
+              .map((l) => ({ id: l.id }))
+          : undefined,
         saves: currentUserId
-          ? { where: { userId: currentUserId }, select: { id: true } }
-          : false,
-        comments: {
-          orderBy: { createdAt: "asc" },
-          include: { user: { select: authorSelect } },
-        },
-      },
+          ? postSaves
+              .filter((s) => s.user_id === currentUserId)
+              .map((s) => ({ id: s.id }))
+          : undefined,
+        comments: postComments,
+      };
     });
 
-    return NextResponse.json(posts);
+    return NextResponse.json(posts.filter(Boolean));
   } catch (error) {
     console.error("GET /api/posts error:", error);
     return NextResponse.json(
@@ -39,6 +78,7 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
+    await ensureSchema();
     const session = await auth();
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Ruxsat yo'q" }, { status: 401 });
@@ -61,20 +101,30 @@ export async function POST(request: Request) {
       );
     }
 
-    const post = await prisma.post.create({
-      data: {
+    const id = genId("p");
+    await pool.query(
+      `INSERT INTO app_posts (id, author_id, content, image_url, skill) VALUES ($1, $2, $3, $4, $5)`,
+      [id, session.user.id, content.trim(), imageUrl || null, skill ?? "Frontend"]
+    );
+
+    const { rows } = await pool.query(`SELECT * FROM app_users WHERE id = $1`, [
+      session.user.id,
+    ]);
+    const author = toPublicUser(rows[0]);
+
+    return NextResponse.json(
+      {
+        id,
         content: content.trim(),
         imageUrl: imageUrl || null,
         skill: skill ?? "Frontend",
-        authorId: session.user.id,
+        createdAt: new Date().toISOString(),
+        author,
+        _count: { likes: 0, comments: 0 },
+        comments: [],
       },
-      include: {
-        author: { select: authorSelect },
-        _count: { select: { likes: true, comments: true } },
-      },
-    });
-
-    return NextResponse.json(post, { status: 201 });
+      { status: 201 }
+    );
   } catch (error) {
     console.error("POST /api/posts error:", error);
     return NextResponse.json(

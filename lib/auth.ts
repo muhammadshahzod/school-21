@@ -1,41 +1,43 @@
 import NextAuth from "next-auth";
-import Google from "next-auth/providers/google";
-import { prisma } from "@/lib/prisma";
+import Credentials from "next-auth/providers/credentials";
+import { ensureSchema, pool } from "@/lib/db";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   providers: [
-    Google({
-      clientId: process.env.GOOGLE_CLIENT_ID,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+    Credentials({
+      credentials: {
+        username: { label: "Login", type: "text" },
+        password: { label: "Parol", type: "password" },
+      },
+      async authorize(credentials) {
+        const username =
+          typeof credentials?.username === "string"
+            ? credentials.username.trim().toLowerCase()
+            : "";
+        const password =
+          typeof credentials?.password === "string" ? credentials.password : "";
+        if (!username || !password) return null;
+
+        await ensureSchema();
+        const { rows } = await pool.query(
+          `SELECT id, name, image, password FROM app_users WHERE lower(username) = $1`,
+          [username]
+        );
+        const user = rows[0];
+        if (!user || user.password !== password) return null;
+
+        return { id: user.id, name: user.name, image: user.image || null };
+      },
     }),
   ],
   secret: process.env.NEXTAUTH_SECRET,
-  // Render (unlike Vercel) isn't auto-detected as a trusted host, so
-  // NextAuth otherwise throws UntrustedHost and shows a generic
-  // "server configuration" error on every request.
   trustHost: true,
-  // Render terminates TLS at its edge and forwards to the app over plain
-  // HTTP, so Auth.js can't auto-detect the connection as secure. Without
-  // this, the PKCE/state cookies get set and read under different names
-  // (secure vs non-secure), which fails to parse on callback.
-  useSecureCookies: process.env.NODE_ENV === "production",
   session: { strategy: "jwt" },
+  pages: { signIn: "/login" },
   callbacks: {
-    async signIn({ user }) {
-      if (!user.email) return false;
-      const existingUser = await prisma.user.findUnique({
-        where: { email: user.email },
-      });
-      return !!existingUser;
-    },
-    async jwt({ token }) {
-      if (token.email) {
-        const dbUser = await prisma.user.findUnique({
-          where: { email: token.email },
-        });
-        if (dbUser) {
-          token.id = dbUser.id;
-        }
+    async jwt({ token, user }) {
+      if (user?.id) {
+        token.id = user.id;
       }
       return token;
     },
@@ -43,10 +45,11 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (session.user && token.id) {
         session.user.id = token.id as string;
         try {
-          await prisma.user.update({
-            where: { id: token.id as string },
-            data: { lastActiveAt: new Date() },
-          });
+          await ensureSchema();
+          await pool.query(
+            `UPDATE app_users SET last_active_at = now() WHERE id = $1`,
+            [token.id]
+          );
         } catch {
           // Presence tracking is best-effort; never block the session on it.
         }

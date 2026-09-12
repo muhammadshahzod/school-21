@@ -4,15 +4,12 @@
   "private": true,
   "scripts": {
     "dev": "next dev --webpack",
-    "build": "prisma generate && next build --webpack",
+    "build": "next build --webpack",
     "start": "next start",
     "lint": "eslint .",
-    "typecheck": "tsc --noEmit",
-    "postinstall": "prisma generate"
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@prisma/adapter-pg": "^7.10.0",
-    "@prisma/client": "^7.10.0",
     "lucide-react": "1.43.0",
     "next": "16.3.5",
     "next-auth": "^5.0.0-beta.32",
@@ -25,11 +22,8 @@
     "@types/pg": "^8.23.1",
     "@types/react": "19.2.18",
     "@types/react-dom": "19.2.7",
-    "dotenv": "^17.4.2",
     "eslint": "9.39.5",
     "eslint-config-next": "16.3.5",
-    "prisma": "^7.10.0",
-    "tsx": "^4.23.13",
     "typescript": "6.0.3"
   },
   "engines": {

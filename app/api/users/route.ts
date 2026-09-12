@@ -1,19 +1,20 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
-import { personSelect } from "@/lib/selects";
+import { ensureSchema, pool, toPublicUser } from "@/lib/db";
 
 export async function GET(request: Request) {
   try {
+    await ensureSchema();
     const { searchParams } = new URL(request.url);
     const skill = searchParams.get("skill");
 
-    const users = await prisma.user.findMany({
-      where: skill ? { skills: { has: skill } } : undefined,
-      orderBy: { createdAt: "desc" },
-      select: { ...personSelect, email: true, createdAt: true },
-    });
+    const { rows } = skill
+      ? await pool.query(
+          `SELECT * FROM app_users WHERE $1 = ANY(skills) ORDER BY created_at DESC`,
+          [skill]
+        )
+      : await pool.query(`SELECT * FROM app_users ORDER BY created_at DESC`);
 
-    return NextResponse.json(users);
+    return NextResponse.json(rows.map(toPublicUser));
   } catch (error) {
     console.error("GET /api/users error:", error);
     return NextResponse.json(

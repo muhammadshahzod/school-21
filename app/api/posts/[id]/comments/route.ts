@@ -1,20 +1,32 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
-import { personSelect } from "@/lib/selects";
+import { ensureSchema, genId, pool, toPublicUser } from "@/lib/db";
 
 export async function GET(
   _request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    await ensureSchema();
     const { id: postId } = await params;
 
-    const comments = await prisma.comment.findMany({
-      where: { postId },
-      orderBy: { createdAt: "asc" },
-      include: { user: { select: personSelect } },
-    });
+    const { rows } = await pool.query(
+      `SELECT
+         c.id AS comment_id, c.content AS comment_content, c.created_at AS comment_created_at,
+         u.*
+       FROM app_comments c
+       JOIN app_users u ON u.id = c.user_id
+       WHERE c.post_id = $1
+       ORDER BY c.created_at ASC`,
+      [postId]
+    );
+
+    const comments = rows.map((row) => ({
+      id: row.comment_id,
+      content: row.comment_content,
+      createdAt: row.comment_created_at.toISOString(),
+      user: toPublicUser(row),
+    }));
 
     return NextResponse.json(comments);
   } catch (error) {
@@ -31,6 +43,7 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    await ensureSchema();
     const session = await auth();
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Ruxsat yo'q" }, { status: 401 });
@@ -46,21 +59,34 @@ export async function POST(
       );
     }
 
-    const post = await prisma.post.findUnique({ where: { id: postId } });
-    if (!post) {
+    const { rows: postRows } = await pool.query(
+      `SELECT id FROM app_posts WHERE id = $1`,
+      [postId]
+    );
+    if (postRows.length === 0) {
       return NextResponse.json({ error: "Post topilmadi" }, { status: 404 });
     }
 
-    const comment = await prisma.comment.create({
-      data: {
-        postId,
-        userId: session.user.id,
-        content: content.trim(),
-      },
-      include: { user: { select: personSelect } },
-    });
+    const id = genId("c");
+    await pool.query(
+      `INSERT INTO app_comments (id, post_id, user_id, content) VALUES ($1, $2, $3, $4)`,
+      [id, postId, session.user.id, content.trim()]
+    );
 
-    return NextResponse.json(comment, { status: 201 });
+    const { rows: userRows } = await pool.query(
+      `SELECT * FROM app_users WHERE id = $1`,
+      [session.user.id]
+    );
+
+    return NextResponse.json(
+      {
+        id,
+        content: content.trim(),
+        createdAt: new Date().toISOString(),
+        user: toPublicUser(userRows[0]),
+      },
+      { status: 201 }
+    );
   } catch (error) {
     console.error("POST /api/posts/[id]/comments error:", error);
     return NextResponse.json(

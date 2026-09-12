@@ -1,28 +1,26 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
-import { personSelect } from "@/lib/selects";
+import { ensureSchema, pool, toPublicUser } from "@/lib/db";
 
 export async function GET() {
   try {
+    await ensureSchema();
     const session = await auth();
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Ruxsat yo'q" }, { status: 401 });
     }
 
-    const user = await prisma.user.findUnique({
-      where: { id: session.user.id },
-      select: { ...personSelect, email: true, createdAt: true },
-    });
-
-    if (!user) {
+    const { rows } = await pool.query(`SELECT * FROM app_users WHERE id = $1`, [
+      session.user.id,
+    ]);
+    if (rows.length === 0) {
       return NextResponse.json(
         { error: "Foydalanuvchi topilmadi" },
         { status: 404 }
       );
     }
 
-    return NextResponse.json(user);
+    return NextResponse.json(toPublicUser(rows[0]));
   } catch (error) {
     console.error("GET /api/users/me error:", error);
     return NextResponse.json(
@@ -34,6 +32,7 @@ export async function GET() {
 
 export async function PATCH(request: Request) {
   try {
+    await ensureSchema();
     const session = await auth();
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Ruxsat yo'q" }, { status: 401 });
@@ -55,25 +54,42 @@ export async function PATCH(request: Request) {
       );
     }
 
-    const user = await prisma.user.update({
-      where: { id: session.user.id },
-      data: {
-        ...(name !== undefined && { name: name.trim() }),
-        ...(bio !== undefined && { bio: String(bio).trim() }),
-        ...(skills !== undefined && {
-          skills: skills.filter((s: unknown) => typeof s === "string"),
-        }),
-        ...(projectTitle !== undefined && {
-          projectTitle: String(projectTitle).trim(),
-        }),
-        ...(projectDescription !== undefined && {
-          projectDescription: String(projectDescription).trim(),
-        }),
-      },
-      select: { ...personSelect, email: true, createdAt: true },
-    });
+    const sets: string[] = [];
+    const values: unknown[] = [];
+    let i = 1;
+    if (name !== undefined) {
+      sets.push(`name = $${i++}`);
+      values.push(name.trim());
+    }
+    if (bio !== undefined) {
+      sets.push(`bio = $${i++}`);
+      values.push(String(bio).trim());
+    }
+    if (skills !== undefined) {
+      sets.push(`skills = $${i++}`);
+      values.push(skills.filter((s: unknown) => typeof s === "string"));
+    }
+    if (projectTitle !== undefined) {
+      sets.push(`project_title = $${i++}`);
+      values.push(String(projectTitle).trim());
+    }
+    if (projectDescription !== undefined) {
+      sets.push(`project_description = $${i++}`);
+      values.push(String(projectDescription).trim());
+    }
 
-    return NextResponse.json(user);
+    if (sets.length > 0) {
+      values.push(session.user.id);
+      await pool.query(
+        `UPDATE app_users SET ${sets.join(", ")} WHERE id = $${i}`,
+        values
+      );
+    }
+
+    const { rows } = await pool.query(`SELECT * FROM app_users WHERE id = $1`, [
+      session.user.id,
+    ]);
+    return NextResponse.json(toPublicUser(rows[0]));
   } catch (error) {
     console.error("PATCH /api/users/me error:", error);
     return NextResponse.json(
