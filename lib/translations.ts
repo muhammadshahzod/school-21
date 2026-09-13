@@ -35,6 +35,7 @@ export const translations: Record<Lang, Dict> = {
     "header.notif_comment": "postingizga izoh qoldirdi",
     "header.notif_message": "sizga xabar yubordi",
     "header.language": "Til",
+    "header.more": "Yana",
 
     // nav
     "nav.feed": "Lenta",
@@ -355,6 +356,7 @@ export const translations: Record<Lang, Dict> = {
     "header.notif_comment": "прокомментировал(а) ваш пост",
     "header.notif_message": "отправил(а) вам сообщение",
     "header.language": "Язык",
+    "header.more": "Ещё",
 
     // nav
     "nav.feed": "Лента",
@@ -675,6 +677,7 @@ export const translations: Record<Lang, Dict> = {
     "header.notif_comment": "commented on your post",
     "header.notif_message": "sent you a message",
     "header.language": "Language",
+    "header.more": "More",
 
     // nav
     "nav.feed": "Feed",

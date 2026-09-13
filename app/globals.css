@@ -508,6 +508,56 @@ main {
   height: 24px;
   border-left: 1px solid var(--border);
 }
+.header-desktop-only {
+  display: inline-flex;
+}
+.header-mobile-only {
+  display: none;
+}
+.header-more-menu {
+  position: relative;
+}
+.header-more-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 60;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 190px;
+  padding: 8px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+  box-shadow: var(--shadow);
+  animation: dropdown-in 0.18s cubic-bezier(0.16, 1, 0.3, 1) both;
+  transform-origin: top right;
+}
+.header-more-lang {
+  display: flex;
+  gap: 4px;
+}
+.header-more-lang .language-switch-option {
+  flex: 1;
+  text-align: center;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+}
+.header-more-action {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  background: transparent;
+  color: var(--text);
+  text-align: left;
+}
+.header-more-action:hover {
+  background: var(--surface-secondary);
+}
 .header-profile {
   display: flex;
   align-items: center;
@@ -2571,18 +2621,18 @@ main {
     height: 66px;
   }
   .header-inner {
-    padding-inline: 18px;
+    padding-inline: 14px;
   }
   .brand-mark {
-    width: 34px;
-    height: 34px;
-    font-size: 23px;
+    width: 32px;
+    height: 32px;
+    font-size: 21px;
   }
   .brand {
-    gap: 10px;
+    gap: 8px;
   }
   .brand-name {
-    font-size: 21px;
+    font-size: 18px;
   }
   .brand-caption {
     font-size: 6px;
@@ -2594,20 +2644,21 @@ main {
   .header-divider {
     display: none;
   }
+  .header-desktop-only {
+    display: none;
+  }
+  .header-mobile-only {
+    display: inline-flex;
+  }
   .header-actions {
-    gap: 2px;
+    gap: 3px;
   }
   .header-actions .icon-button {
     width: 34px;
     height: 34px;
   }
-  .language-switch-code {
-    display: none;
-  }
-  .language-switch-trigger {
-    padding: 0;
-    width: 34px;
-    justify-content: center;
+  .header-more-dropdown {
+    min-width: 200px;
   }
   .header-profile .avatar {
     display: inline-flex;

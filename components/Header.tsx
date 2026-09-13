@@ -6,6 +6,7 @@ import { signOut } from "next-auth/react";
 import { useEffect, useRef, useState } from "react";
 import Avatar from "./Avatar";
 import GlobalSearchModal from "./GlobalSearchModal";
+import HeaderMoreMenu from "./HeaderMoreMenu";
 import LanguageSwitch from "./LanguageSwitch";
 import ThemeToggle from "./ThemeToggle";
 import { useDemo } from "./DemoProvider";
@@ -96,6 +97,7 @@ function NotificationBell() {
 export default function Header() {
   const { user } = useDemo();
   const { t } = useLang();
+  const isAdmin = user.username === "shahzod";
   const [searching, setSearching] = useState(false);
   return (
     <header className="site-header">
@@ -115,19 +117,26 @@ export default function Header() {
           >
             <Search size={18} />
           </button>
-          <LanguageSwitch />
-          <ThemeToggle />
+          <span className="header-desktop-only">
+            <LanguageSwitch />
+          </span>
+          <span className="header-desktop-only">
+            <ThemeToggle />
+          </span>
           <NotificationBell />
-          {user.username === "shahzod" && (
+          {isAdmin && (
             <Link
               href="/admin"
-              className="icon-button"
+              className="icon-button header-desktop-only"
               aria-label={t("header.admin_panel")}
               title={t("header.admin_panel")}
             >
               <ShieldCheck size={18} />
             </Link>
           )}
+          <span className="header-mobile-only">
+            <HeaderMoreMenu isAdmin={isAdmin} />
+          </span>
           <span className="header-divider" />
           <Link
             href="/profile"
