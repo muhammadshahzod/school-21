@@ -34,6 +34,7 @@ import {
   sendGroupMessage,
   sendPost as apiSendPost,
   toggleLikePost,
+  toggleReaction as apiToggleReaction,
   toggleSavePost,
   updateMyProfile,
   type AppNotification,
@@ -61,6 +62,7 @@ interface DemoContextValue extends DemoState {
   ) => Promise<void>;
   toggleLike: (id: string) => void;
   toggleSave: (id: string) => void;
+  toggleReaction: (id: string, emoji: string) => void;
   addComment: (id: string, text: string) => void;
   sendMessage: (conversationId: string, text: string) => void;
   deleteMessage: (id: string) => void;
@@ -283,6 +285,38 @@ export function DemoProvider({ children }: { children: ReactNode }) {
         updatePost(id, () => previous);
         setActionError("Saqlashda xatolik yuz berdi.");
       });
+    },
+    toggleReaction(id, emoji) {
+      const previous = data.posts.find((post) => post.id === id);
+      if (!previous) return;
+      const removing = previous.myReaction === emoji;
+      const nextReactions = previous.reactions
+        .map((r) =>
+          r.emoji === previous.myReaction ? { ...r, count: r.count - 1 } : r
+        )
+        .filter((r) => r.count > 0);
+      if (!removing) {
+        const existing = nextReactions.find((r) => r.emoji === emoji);
+        if (existing) existing.count += 1;
+        else nextReactions.push({ emoji, count: 1 });
+      }
+      updatePost(id, (post) => ({
+        ...post,
+        reactions: nextReactions,
+        myReaction: removing ? null : emoji,
+      }));
+      apiToggleReaction(id, emoji)
+        .then((result) => {
+          updatePost(id, (post) => ({
+            ...post,
+            reactions: result.reactions,
+            myReaction: result.myReaction,
+          }));
+        })
+        .catch(() => {
+          updatePost(id, () => previous);
+          setActionError("Reaktsiya qo'shishda xatolik yuz berdi.");
+        });
     },
     addComment(id, text) {
       if (!text.trim()) return;

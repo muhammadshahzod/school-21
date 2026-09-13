@@ -66,6 +66,16 @@ export async function PATCH(
       `SELECT * FROM app_saves WHERE post_id = $1`,
       [postId]
     );
+    const { rows: reactionRows } = await pool.query(
+      `SELECT emoji, user_id FROM app_reactions WHERE post_id = $1`,
+      [postId]
+    );
+    const reactionCounts = new Map<string, number>();
+    for (const r of reactionRows) {
+      reactionCounts.set(r.emoji, (reactionCounts.get(r.emoji) ?? 0) + 1);
+    }
+    const myReaction =
+      reactionRows.find((r) => r.user_id === session.user.id)?.emoji ?? null;
     const { rows: commentRows } = await pool.query(
       `SELECT * FROM app_comments WHERE post_id = $1 ORDER BY created_at ASC`,
       [postId]
@@ -94,6 +104,10 @@ export async function PATCH(
       saves: saveRows
         .filter((s) => s.user_id === session.user.id)
         .map((s) => ({ id: s.id })),
+      reactions: Array.from(reactionCounts.entries()).map(
+        ([emoji, count]) => ({ emoji, count })
+      ),
+      myReaction,
       comments: commentRows
         .map((c) => {
           const commentAuthor = commentAuthorsMap.get(c.user_id);

@@ -20,6 +20,9 @@ export async function GET() {
     );
     const { rows: likeRows } = await pool.query(`SELECT * FROM app_likes`);
     const { rows: saveRows } = await pool.query(`SELECT * FROM app_saves`);
+    const { rows: reactionRows } = await pool.query(
+      `SELECT * FROM app_reactions`
+    );
     const { rows: commentRows } = await pool.query(
       `SELECT * FROM app_comments ORDER BY created_at ASC`
     );
@@ -30,6 +33,14 @@ export async function GET() {
 
       const postLikes = likeRows.filter((l) => l.post_id === post.id);
       const postSaves = saveRows.filter((s) => s.post_id === post.id);
+      const postReactions = reactionRows.filter((r) => r.post_id === post.id);
+      const reactionCounts = new Map<string, number>();
+      for (const r of postReactions) {
+        reactionCounts.set(r.emoji, (reactionCounts.get(r.emoji) ?? 0) + 1);
+      }
+      const myReaction = currentUserId
+        ? postReactions.find((r) => r.user_id === currentUserId)?.emoji ?? null
+        : null;
       const postComments = commentRows
         .filter((c) => c.post_id === post.id)
         .map((c) => {
@@ -62,6 +73,10 @@ export async function GET() {
               .filter((s) => s.user_id === currentUserId)
               .map((s) => ({ id: s.id }))
           : undefined,
+        reactions: Array.from(reactionCounts.entries()).map(
+          ([emoji, count]) => ({ emoji, count })
+        ),
+        myReaction,
         comments: postComments,
       };
     });
@@ -121,6 +136,8 @@ export async function POST(request: Request) {
         createdAt: new Date().toISOString(),
         author,
         _count: { likes: 0, comments: 0 },
+        reactions: [],
+        myReaction: null,
         comments: [],
       },
       { status: 201 }

@@ -1,11 +1,12 @@
 "use client";
 
-import { Bookmark, Heart, MessageCircle, Pencil, Send, Trash2 } from "lucide-react";
+import { Bookmark, Heart, MessageCircle, Pencil, Send, SmilePlus, Trash2 } from "lucide-react";
 import { useId, useState, type FormEvent } from "react";
 import Avatar from "./Avatar";
 import CreatePostModal from "./CreatePostModal";
 import PostImage from "./PostImage";
 import { useDemo } from "./DemoProvider";
+import { REACTION_EMOJIS } from "@/lib/reactions";
 import type { Post } from "./types";
 
 export default function PostCard({
@@ -15,7 +16,9 @@ export default function PostCard({
   post: Post;
   index?: number;
 }) {
-  const { user, toggleLike, toggleSave, addComment, deletePost } = useDemo();
+  const { user, toggleLike, toggleSave, toggleReaction, addComment, deletePost } =
+    useDemo();
+  const [pickerOpen, setPickerOpen] = useState(false);
   const [commentsOpen, setCommentsOpen] = useState(false);
   const [comment, setComment] = useState("");
   const [editing, setEditing] = useState(false);
@@ -114,6 +117,47 @@ export default function PostCard({
         >
           <Bookmark size={20} fill={post.saved ? "currentColor" : "none"} />
         </button>
+      </div>
+      <div className="reaction-bar">
+        {post.reactions.map((r) => (
+          <button
+            key={r.emoji}
+            className={`reaction-pill ${post.myReaction === r.emoji ? "is-active" : ""}`}
+            onClick={() => toggleReaction(post.id, r.emoji)}
+            aria-pressed={post.myReaction === r.emoji}
+            aria-label={`${r.emoji} reaktsiya: ${r.count}`}
+          >
+            <span>{r.emoji}</span>
+            <span>{r.count}</span>
+          </button>
+        ))}
+        <div className="reaction-picker-wrap">
+          <button
+            className="icon-button small-icon"
+            aria-label="Reaktsiya qo'shish"
+            title="Reaktsiya qo'shish"
+            onClick={() => setPickerOpen((v) => !v)}
+          >
+            <SmilePlus size={16} />
+          </button>
+          {pickerOpen && (
+            <div className="reaction-picker">
+              {REACTION_EMOJIS.map((emoji) => (
+                <button
+                  key={emoji}
+                  className="reaction-picker-option"
+                  aria-label={`${emoji} bilan reaktsiya bildirish`}
+                  onClick={() => {
+                    toggleReaction(post.id, emoji);
+                    setPickerOpen(false);
+                  }}
+                >
+                  {emoji}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
       {commentsOpen && (
         <section

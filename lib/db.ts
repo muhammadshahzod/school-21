@@ -96,6 +96,14 @@ export function ensureSchema(): Promise<void> {
         user_id TEXT NOT NULL REFERENCES app_users(id) ON DELETE CASCADE,
         UNIQUE (post_id, user_id)
       );
+      CREATE TABLE IF NOT EXISTS app_reactions (
+        id TEXT PRIMARY KEY,
+        post_id TEXT NOT NULL REFERENCES app_posts(id) ON DELETE CASCADE,
+        user_id TEXT NOT NULL REFERENCES app_users(id) ON DELETE CASCADE,
+        emoji TEXT NOT NULL,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+        UNIQUE (post_id, user_id)
+      );
       CREATE TABLE IF NOT EXISTS app_comments (
         id TEXT PRIMARY KEY,
         post_id TEXT NOT NULL REFERENCES app_posts(id) ON DELETE CASCADE,

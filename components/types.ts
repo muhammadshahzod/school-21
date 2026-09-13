@@ -25,6 +25,11 @@ export interface Comment {
   time: string;
 }
 
+export interface Reaction {
+  emoji: string;
+  count: number;
+}
+
 export interface Post {
   id: string;
   author: Peer;
@@ -35,6 +40,8 @@ export interface Post {
   likes: number;
   liked: boolean;
   saved: boolean;
+  reactions: Reaction[];
+  myReaction: string | null;
   comments: Comment[];
 }
 

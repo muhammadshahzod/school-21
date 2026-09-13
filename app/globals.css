@@ -866,6 +866,57 @@ main {
 .save-button.is-saved {
   color: var(--text);
 }
+.reaction-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  padding: 0 23px 14px;
+}
+.reaction-pill {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 9px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  font-size: 12px;
+  background: var(--surface-secondary);
+}
+.reaction-pill.is-active {
+  border-color: var(--text);
+  background: var(--surface);
+}
+.reaction-picker-wrap {
+  position: relative;
+}
+.reaction-picker {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 0;
+  display: flex;
+  gap: 4px;
+  padding: 6px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+  z-index: 5;
+}
+.reaction-picker-option {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  font-size: 16px;
+}
+.reaction-picker-option:hover {
+  background: var(--surface-secondary);
+}
 .feed-end {
   display: flex;
   align-items: center;
@@ -1372,6 +1423,19 @@ main {
   font-size: 12px;
   padding: 0;
   margin-bottom: 8px;
+}
+.global-search-result {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 12px;
+  background: var(--surface-secondary);
+}
+.global-search-result:hover {
+  background: var(--surface);
 }
 .group-member-list {
   display: flex;

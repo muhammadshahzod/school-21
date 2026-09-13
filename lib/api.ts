@@ -32,6 +32,8 @@ type ApiComment = {
   user: ApiPerson;
 };
 
+type ApiReaction = { emoji: string; count: number };
+
 type ApiPost = {
   id: string;
   content: string;
@@ -42,6 +44,8 @@ type ApiPost = {
   _count: { likes: number; comments: number };
   likes?: { id: string }[];
   saves?: { id: string }[];
+  reactions?: ApiReaction[];
+  myReaction?: string | null;
   comments: ApiComment[];
 };
 
@@ -163,6 +167,8 @@ function toPost(p: ApiPost): Post {
     likes: p._count.likes,
     liked: (p.likes?.length ?? 0) > 0,
     saved: (p.saves?.length ?? 0) > 0,
+    reactions: p.reactions ?? [],
+    myReaction: p.myReaction ?? null,
     comments: p.comments.map(toComment),
   };
 }
@@ -446,6 +452,13 @@ export async function updateMyProfile(profile: {
 
 export async function deletePost(id: string): Promise<void> {
   await sendJson(`/api/posts/${id}`, "DELETE");
+}
+
+export async function toggleReaction(
+  postId: string,
+  emoji: string
+): Promise<{ reactions: { emoji: string; count: number }[]; myReaction: string | null }> {
+  return sendJson(`/api/posts/${postId}/reactions`, "POST", { emoji });
 }
 
 export async function deleteMessage(id: string): Promise<void> {

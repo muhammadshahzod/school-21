@@ -1,10 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowUpRight, Bell, LogOut, ShieldCheck } from "lucide-react";
+import { ArrowUpRight, Bell, LogOut, Search, ShieldCheck } from "lucide-react";
 import { signOut } from "next-auth/react";
 import { useEffect, useRef, useState } from "react";
 import Avatar from "./Avatar";
+import GlobalSearchModal from "./GlobalSearchModal";
 import ThemeToggle from "./ThemeToggle";
 import { useDemo } from "./DemoProvider";
 
@@ -91,6 +92,7 @@ function NotificationBell() {
 
 export default function Header() {
   const { user } = useDemo();
+  const [searching, setSearching] = useState(false);
   return (
     <header className="site-header">
       <div className="header-inner">
@@ -101,6 +103,14 @@ export default function Header() {
           <ArrowUpRight size={13} />
         </div>
         <div className="header-actions">
+          <button
+            className="icon-button"
+            aria-label="Qidirish"
+            title="Qidirish"
+            onClick={() => setSearching(true)}
+          >
+            <Search size={18} />
+          </button>
           <ThemeToggle />
           <NotificationBell />
           {user.username === "shahzod" && (
@@ -127,6 +137,7 @@ export default function Header() {
           </button>
         </div>
       </div>
+      {searching && <GlobalSearchModal onClose={() => setSearching(false)} />}
     </header>
   );
 }

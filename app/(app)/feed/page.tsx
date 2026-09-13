@@ -8,7 +8,8 @@ import {
   SearchX,
   X,
 } from "lucide-react";
-import { useState } from "react";
+import { Suspense, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import Avatar from "@/components/Avatar";
 import CreatePostModal from "@/components/CreatePostModal";
 import FeedSidebar from "@/components/FeedSidebar";
@@ -16,9 +17,9 @@ import PostCard from "@/components/PostCard";
 import { useDemo } from "@/components/DemoProvider";
 import { SKILLS } from "@/components/types";
 
-export default function FeedPage() {
+function FeedContent({ initialQuery }: { initialQuery: string }) {
   const { posts, user } = useDemo();
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useState(initialQuery);
   const [skill, setSkill] = useState("Barchasi");
   const [creating, setCreating] = useState(false);
   const [notice, setNotice] = useState("");
@@ -173,5 +174,29 @@ export default function FeedPage() {
         />
       )}
     </div>
+  );
+}
+
+function FeedRoute() {
+  const params = useSearchParams();
+  const q = params.get("q") ?? "";
+  // Keying on the query forces a remount (and fresh useState) whenever a
+  // new search arrives via URL, including repeat searches from the header
+  // modal while already on this page — router.push alone won't reset state
+  // on an already-mounted route.
+  return <FeedContent key={q} initialQuery={q} />;
+}
+
+export default function FeedPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="loading-screen" role="status">
+          Lenta yuklanmoqda…
+        </div>
+      }
+    >
+      <FeedRoute />
+    </Suspense>
   );
 }
