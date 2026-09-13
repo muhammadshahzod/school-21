@@ -164,6 +164,7 @@ function toPost(p: ApiPost): Post {
     image: p.imageUrl ?? undefined,
     skill: p.skill,
     time: relativeTime(p.createdAt),
+    createdAt: p.createdAt,
     likes: p._count.likes,
     liked: (p.likes?.length ?? 0) > 0,
     saved: (p.saves?.length ?? 0) > 0,

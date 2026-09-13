@@ -37,6 +37,7 @@ export interface Post {
   image?: string;
   skill: string;
   time: string;
+  createdAt: string;
   likes: number;
   liked: boolean;
   saved: boolean;

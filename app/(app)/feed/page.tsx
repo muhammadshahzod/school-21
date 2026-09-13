@@ -3,13 +3,17 @@
 import {
   ArrowUpRight,
   ImagePlus,
+  MessageCircle,
   Plus,
   Search,
   SearchX,
+  Sparkles,
+  Users,
   X,
 } from "lucide-react";
 import { Suspense, useState } from "react";
 import { useSearchParams } from "next/navigation";
+import { useSession } from "next-auth/react";
 import Avatar from "@/components/Avatar";
 import CreatePostModal from "@/components/CreatePostModal";
 import FeedSidebar from "@/components/FeedSidebar";
@@ -20,9 +24,25 @@ import { useLang } from "@/lib/useLang";
 
 const ALL_SKILL = "Barchasi";
 
+function isToday(iso: string) {
+  const date = new Date(iso);
+  const now = new Date();
+  return (
+    date.getFullYear() === now.getFullYear() &&
+    date.getMonth() === now.getMonth() &&
+    date.getDate() === now.getDate()
+  );
+}
+
 function FeedContent({ initialQuery }: { initialQuery: string }) {
-  const { posts, user } = useDemo();
+  const { posts, conversations, community, user } = useDemo();
+  const { data: session } = useSession();
   const { t } = useLang();
+  const displayName =
+    session?.user?.name?.split(" ")[0] ?? user.name.split(" ")[0];
+  const todayPostsCount = posts.filter((post) => isToday(post.createdAt)).length;
+  const activeChatsCount = conversations.length;
+  const onlinePeersCount = community.online ?? community.total;
   const [search, setSearch] = useState(initialQuery);
   const [skill, setSkill] = useState(ALL_SKILL);
   const [creating, setCreating] = useState(false);
@@ -45,7 +65,7 @@ function FeedContent({ initialQuery }: { initialQuery: string }) {
             {t("feed.eyebrow")}
           </div>
           <h1>
-            {t("feed.heading")}
+            {t("feed.welcome", { name: displayName })}
             <span className="title-period">.</span>
           </h1>
           <p>{t("feed.subtitle")}</p>
@@ -58,6 +78,20 @@ function FeedContent({ initialQuery }: { initialQuery: string }) {
           {t("feed.new_post")}
         </button>
       </section>
+      <div className="feed-stats-row">
+        <div className="feed-stat-card">
+          <Sparkles size={16} />
+          <span>{t("feed.stat_new_posts", { n: todayPostsCount })}</span>
+        </div>
+        <div className="feed-stat-card">
+          <MessageCircle size={16} />
+          <span>{t("feed.stat_active_chats", { n: activeChatsCount })}</span>
+        </div>
+        <div className="feed-stat-card">
+          <Users size={16} />
+          <span>{t("feed.stat_online_peers", { n: onlinePeersCount })}</span>
+        </div>
+      </div>
       <div className="feed-layout">
         <div className="feed-main">
           <div className="feed-tools">
