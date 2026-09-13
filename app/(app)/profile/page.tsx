@@ -5,6 +5,7 @@ import {
   Bookmark,
   Code2,
   Grid2X2,
+  KeyRound,
   MapPin,
   Pencil,
   Plus,
@@ -12,6 +13,7 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import Avatar from "@/components/Avatar";
+import ChangePasswordModal from "@/components/ChangePasswordModal";
 import CreatePostModal from "@/components/CreatePostModal";
 import EditProfileModal from "@/components/EditProfileModal";
 import PostCard from "@/components/PostCard";
@@ -20,6 +22,7 @@ import { useDemo } from "@/components/DemoProvider";
 export default function ProfilePage() {
   const { user, posts } = useDemo();
   const [editing, setEditing] = useState(false);
+  const [changingPassword, setChangingPassword] = useState(false);
   const [creating, setCreating] = useState(false);
   const [tab, setTab] = useState<"posts" | "saved">("posts");
   const [notice, setNotice] = useState("");
@@ -46,13 +49,22 @@ export default function ProfilePage() {
       <section className="profile-details">
         <div className="profile-topline">
           <Avatar user={user} size="xl" />
-          <button
-            className="button button-secondary"
-            onClick={() => setEditing(true)}
-          >
-            <Pencil size={16} />
-            Tahrirlash
-          </button>
+          <div className="profile-topline-actions">
+            <button
+              className="button button-secondary"
+              onClick={() => setEditing(true)}
+            >
+              <Pencil size={16} />
+              Tahrirlash
+            </button>
+            <button
+              className="button button-secondary"
+              onClick={() => setChangingPassword(true)}
+            >
+              <KeyRound size={16} />
+              Parolni o‘zgartirish
+            </button>
+          </div>
         </div>
         <div className="profile-identity">
           <div>
@@ -208,6 +220,12 @@ export default function ProfilePage() {
         <EditProfileModal
           onClose={() => setEditing(false)}
           onSaved={() => setNotice("Profilingiz yangilandi.")}
+        />
+      )}
+      {changingPassword && (
+        <ChangePasswordModal
+          onClose={() => setChangingPassword(false)}
+          onSaved={() => setNotice("Parolingiz yangilandi.")}
         />
       )}
       {creating && <CreatePostModal onClose={() => setCreating(false)} />}

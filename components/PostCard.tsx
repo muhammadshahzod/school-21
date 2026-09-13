@@ -1,8 +1,9 @@
 "use client";
 
-import { Bookmark, Heart, MessageCircle, Send } from "lucide-react";
+import { Bookmark, Heart, MessageCircle, Pencil, Send, Trash2 } from "lucide-react";
 import { useId, useState, type FormEvent } from "react";
 import Avatar from "./Avatar";
+import CreatePostModal from "./CreatePostModal";
 import PostImage from "./PostImage";
 import { useDemo } from "./DemoProvider";
 import type { Post } from "./types";
@@ -14,9 +15,10 @@ export default function PostCard({
   post: Post;
   index?: number;
 }) {
-  const { user, toggleLike, toggleSave, addComment } = useDemo();
+  const { user, toggleLike, toggleSave, addComment, deletePost } = useDemo();
   const [commentsOpen, setCommentsOpen] = useState(false);
   const [comment, setComment] = useState("");
+  const [editing, setEditing] = useState(false);
   const commentsId = useId();
 
   function submitComment(event: FormEvent) {
@@ -43,7 +45,31 @@ export default function PostCard({
             </span>
           </div>
         </div>
-        <span className="tag post-skill">{post.skill}</span>
+        <div className="post-header-actions">
+          <span className="tag post-skill">{post.skill}</span>
+          {post.author.id === user.id && (
+            <>
+              <button
+                className="icon-button small-icon"
+                aria-label="Postni tahrirlash"
+                title="Tahrirlash"
+                onClick={() => setEditing(true)}
+              >
+                <Pencil size={16} />
+              </button>
+              <button
+                className="icon-button small-icon"
+                aria-label="Postni o'chirish"
+                title="O'chirish"
+                onClick={() => {
+                  if (confirm("Bu postni o'chirmoqchimisiz?")) deletePost(post.id);
+                }}
+              >
+                <Trash2 size={16} />
+              </button>
+            </>
+          )}
+        </div>
       </div>
       <p className="post-text">{post.text}</p>
       {post.image && (
@@ -135,6 +161,9 @@ export default function PostCard({
             </button>
           </form>
         </section>
+      )}
+      {editing && (
+        <CreatePostModal editing={post} onClose={() => setEditing(false)} />
       )}
     </article>
   );

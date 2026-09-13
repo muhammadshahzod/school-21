@@ -13,6 +13,9 @@ import { X } from "lucide-react";
 import {
   GENERAL_CHANNEL_ID,
   createGroupApi,
+  deleteMessage as apiDeleteMessage,
+  deletePost as apiDeletePost,
+  editPost as apiEditPost,
   getCommunity,
   getConversations,
   getCurrentUser,
@@ -49,12 +52,21 @@ interface DemoState {
 
 interface DemoContextValue extends DemoState {
   addPost: (text: string, skill: string, image?: string) => Promise<void>;
+  deletePost: (id: string) => void;
+  editPost: (
+    id: string,
+    text: string,
+    skill: string,
+    image?: string,
+  ) => Promise<void>;
   toggleLike: (id: string) => void;
   toggleSave: (id: string) => void;
   addComment: (id: string, text: string) => void;
   sendMessage: (conversationId: string, text: string) => void;
+  deleteMessage: (id: string) => void;
   markRead: (conversationId: string) => void;
   createGroup: (name: string, memberIds: string[]) => Promise<string>;
+  ensureConversation: (peer: Peer) => string;
   markNotificationsRead: () => void;
   updateProfile: (
     profile: Pick<Peer, "name" | "bio" | "skills" | "project"> & {
@@ -232,6 +244,24 @@ export function DemoProvider({ children }: { children: ReactNode }) {
       const post = await apiSendPost(text.trim(), skill, image);
       setData((prev) => prev && { ...prev, posts: [post, ...prev.posts] });
     },
+    deletePost(id) {
+      const previous = data.posts;
+      setData((prev) => prev && { ...prev, posts: prev.posts.filter((p) => p.id !== id) });
+      apiDeletePost(id).catch(() => {
+        setData((prev) => prev && { ...prev, posts: previous });
+        setActionError("Postni o'chirishda xatolik yuz berdi.");
+      });
+    },
+    async editPost(id, text, skill, image) {
+      const updated = await apiEditPost(id, text.trim(), skill, image);
+      setData(
+        (prev) =>
+          prev && {
+            ...prev,
+            posts: prev.posts.map((post) => (post.id === id ? updated : post)),
+          },
+      );
+    },
     toggleLike(id) {
       const previous = data.posts.find((post) => post.id === id);
       if (!previous) return;
@@ -327,6 +357,20 @@ export function DemoProvider({ children }: { children: ReactNode }) {
           setActionError("Xabar yuborishda xatolik yuz berdi.");
         });
     },
+    deleteMessage(id) {
+      const previous = data.messages;
+      setData(
+        (prev) =>
+          prev && {
+            ...prev,
+            messages: prev.messages.filter((m) => m.id !== id),
+          },
+      );
+      apiDeleteMessage(id).catch(() => {
+        setData((prev) => prev && { ...prev, messages: previous });
+        setActionError("Xabarni o'chirishda xatolik yuz berdi.");
+      });
+    },
     markRead,
     async createGroup(name, memberIds) {
       const conversation = await createGroupApi(name, memberIds);
@@ -338,6 +382,21 @@ export function DemoProvider({ children }: { children: ReactNode }) {
           },
       );
       return conversation.id;
+    },
+    ensureConversation(peer) {
+      setData((prev) => {
+        if (!prev) return prev;
+        if (prev.conversations.some((c) => c.id === peer.id)) return prev;
+        const draft: Conversation = {
+          id: peer.id,
+          peer,
+          lastMessage: "",
+          time: "",
+          unread: 0,
+        };
+        return { ...prev, conversations: [draft, ...prev.conversations] };
+      });
+      return peer.id;
     },
     markNotificationsRead() {
       setData(

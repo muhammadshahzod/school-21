@@ -85,7 +85,7 @@ async function fetchJson<T>(url: string): Promise<T> {
 
 async function sendJson<T>(
   url: string,
-  method: "POST" | "PATCH",
+  method: "POST" | "PATCH" | "DELETE",
   body?: unknown
 ): Promise<T> {
   const res = await fetch(url, {
@@ -442,4 +442,36 @@ export async function updateMyProfile(profile: {
     ...(profile.avatar !== undefined && { image: profile.avatar }),
   });
   return toPeer(updated);
+}
+
+export async function deletePost(id: string): Promise<void> {
+  await sendJson(`/api/posts/${id}`, "DELETE");
+}
+
+export async function deleteMessage(id: string): Promise<void> {
+  await sendJson(`/api/admin/messages/${id}`, "DELETE");
+}
+
+export async function editPost(
+  id: string,
+  content: string,
+  skill: string,
+  imageUrl?: string
+): Promise<Post> {
+  const post = await sendJson<ApiPost>(`/api/posts/${id}`, "PATCH", {
+    content,
+    skill,
+    imageUrl,
+  });
+  return toPost(post);
+}
+
+export async function changePassword(
+  currentPassword: string,
+  newPassword: string
+): Promise<void> {
+  await sendJson("/api/users/me/password", "PATCH", {
+    currentPassword,
+    newPassword,
+  });
 }

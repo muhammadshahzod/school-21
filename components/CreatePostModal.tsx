@@ -5,21 +5,23 @@ import { useRef, useState, type FormEvent } from "react";
 import Avatar from "./Avatar";
 import Modal from "./Modal";
 import { useDemo } from "./DemoProvider";
-import { SKILLS } from "./types";
+import { SKILLS, type Post } from "./types";
 
 const MAX_IMAGE_BYTES = 2 * 1024 * 1024;
 
 export default function CreatePostModal({
   onClose,
   onCreated,
+  editing,
 }: {
   onClose: () => void;
   onCreated?: () => void;
+  editing?: Post;
 }) {
-  const { user, addPost } = useDemo();
-  const [text, setText] = useState("");
-  const [image, setImage] = useState("");
-  const [skill, setSkill] = useState<string>(SKILLS[0]);
+  const { user, addPost, editPost } = useDemo();
+  const [text, setText] = useState(editing?.text ?? "");
+  const [image, setImage] = useState(editing?.image ?? "");
+  const [skill, setSkill] = useState<string>(editing?.skill ?? SKILLS[0]);
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -55,18 +57,30 @@ export default function CreatePostModal({
     setSubmitting(true);
     setError("");
     try {
-      await addPost(text, skill, image.trim() || undefined);
+      if (editing) {
+        await editPost(editing.id, text, skill, image.trim() || undefined);
+      } else {
+        await addPost(text, skill, image.trim() || undefined);
+      }
       onCreated?.();
       onClose();
     } catch {
-      setError("Post yaratishda xatolik yuz berdi. Qaytadan urinib ko‘ring.");
+      setError(
+        editing
+          ? "Postni yangilashda xatolik yuz berdi. Qaytadan urinib ko‘ring."
+          : "Post yaratishda xatolik yuz berdi. Qaytadan urinib ko‘ring.",
+      );
       setSubmitting(false);
     }
   }
   return (
     <Modal
-      title="Bir fikrdan boshlanadi."
-      description="G‘oya, savol yoki yangi yutuq — davrangiz bilan ulashing."
+      title={editing ? "Postni tahrirlash." : "Bir fikrdan boshlanadi."}
+      description={
+        editing
+          ? "Post matnini, rasmini yoki yo‘nalishini yangilang."
+          : "G‘oya, savol yoki yangi yutuq — davrangiz bilan ulashing."
+      }
       onClose={onClose}
     >
       <form onSubmit={submit} className="stack-form">
@@ -168,7 +182,11 @@ export default function CreatePostModal({
             type="submit"
             disabled={!text.trim() || submitting}
           >
-            {submitting ? "Yuborilmoqda…" : "Ulashish"}
+            {submitting
+              ? "Saqlanmoqda…"
+              : editing
+                ? "Yangilash"
+                : "Ulashish"}
             {!submitting && <ArrowUpRight size={17} />}
           </button>
         </div>

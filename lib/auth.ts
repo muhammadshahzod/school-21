@@ -42,6 +42,12 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (user?.id) {
         token.id = user.id;
       }
+      // Auth.js copies the full avatar (a base64 data: URI, up to 2MB) into
+      // token.picture by default. The app never reads session.user.image —
+      // it always fetches the current avatar via /api/users/me — so drop it
+      // here, otherwise the encrypted JWT cookie can exceed header size
+      // limits (HTTP 431) for any user with an uploaded profile picture.
+      delete token.picture;
       return token;
     },
     async session({ session, token }) {

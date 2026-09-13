@@ -4,6 +4,7 @@ import {
   ArrowLeft,
   ArrowUpRight,
   MessageCircle,
+  MessageSquarePlus,
   Search,
   Send,
   Users,
@@ -14,12 +15,20 @@ import { useSearchParams } from "next/navigation";
 import Avatar from "@/components/Avatar";
 import ChatBubble from "@/components/ChatBubble";
 import GroupCreateModal from "@/components/GroupCreateModal";
+import NewMessageModal from "@/components/NewMessageModal";
 import { useDemo } from "@/components/DemoProvider";
 import { GENERAL_CHANNEL_ID } from "@/lib/api";
 
 function ChatContent() {
-  const { conversations, messages, peers, user, sendMessage, markRead } =
-    useDemo();
+  const {
+    conversations,
+    messages,
+    peers,
+    user,
+    sendMessage,
+    markRead,
+    ensureConversation,
+  } = useDemo();
   const params = useSearchParams();
   const peerId = params.get("peer");
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -27,6 +36,7 @@ function ChatContent() {
   const [search, setSearch] = useState("");
   const [drafts, setDrafts] = useState<Record<string, string>>({});
   const [creatingGroup, setCreatingGroup] = useState(false);
+  const [startingNewMessage, setStartingNewMessage] = useState(false);
   const requested = conversations.find((c) => c.peer.id === peerId);
   const selected =
     conversations.find((c) => c.id === selectedId) ??
@@ -53,6 +63,12 @@ function ChatContent() {
       "Foydalanuvchi"
     );
   }
+
+  useEffect(() => {
+    if (!peerId || requested) return;
+    const peer = peers.find((p) => p.id === peerId);
+    if (peer) ensureConversation(peer);
+  }, [peerId, requested, peers, ensureConversation]);
 
   useEffect(() => {
     if (!selected) return;
@@ -96,14 +112,24 @@ function ChatContent() {
             <h2>
               Xabarlar<span>{conversations.length}</span>
             </h2>
-            <button
-              className="icon-button"
-              onClick={() => setCreatingGroup(true)}
-              aria-label="Yangi guruh yaratish"
-              title="Guruh yaratish"
-            >
-              <UserPlus size={19} />
-            </button>
+            <div className="conversation-list-actions">
+              <button
+                className="icon-button"
+                onClick={() => setStartingNewMessage(true)}
+                aria-label="Yangi xabar yozish"
+                title="Yangi xabar"
+              >
+                <MessageSquarePlus size={19} />
+              </button>
+              <button
+                className="icon-button"
+                onClick={() => setCreatingGroup(true)}
+                aria-label="Yangi guruh yaratish"
+                title="Guruh yaratish"
+              >
+                <UserPlus size={19} />
+              </button>
+            </div>
           </div>
           <div className="chat-search search-field">
             <Search size={17} />
@@ -279,6 +305,17 @@ function ChatContent() {
           onCreated={(id) => {
             setSelectedId(id);
             setMobileOpen(true);
+          }}
+        />
+      )}
+      {startingNewMessage && (
+        <NewMessageModal
+          onClose={() => setStartingNewMessage(false)}
+          onSelect={(peer) => {
+            const id = ensureConversation(peer);
+            setSelectedId(id);
+            setMobileOpen(true);
+            setStartingNewMessage(false);
           }}
         />
       )}

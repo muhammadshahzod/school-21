@@ -781,6 +781,12 @@ main {
   color: var(--muted);
   font-size: 9px;
 }
+.post-header-actions {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  flex-shrink: 0;
+}
 .post-skill {
   align-self: flex-start;
   margin-top: 3px;
@@ -1392,6 +1398,47 @@ main {
 .group-member-option input {
   accent-color: var(--text);
 }
+.admin-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 10px;
+  margin-bottom: 28px;
+  max-width: 720px;
+}
+.admin-stat-card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--surface);
+}
+.admin-stat-card strong {
+  font-family: var(--font-display);
+  font-size: 24px;
+  font-weight: 500;
+  line-height: 1;
+}
+.admin-stat-card span {
+  font-size: 11px;
+  color: var(--muted);
+}
+.admin-top-posters {
+  margin-bottom: 32px;
+}
+.admin-top-posters h2 {
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 500;
+  margin-bottom: 10px;
+}
+.admin-rank {
+  font-family: var(--font-display);
+  font-size: 13px;
+  color: var(--muted);
+  min-width: 16px;
+}
 .form-error {
   padding: 10px 12px;
   background: var(--surface-secondary);
@@ -1479,6 +1526,11 @@ main {
   display: flex;
   align-items: center;
   justify-content: space-between;
+}
+.conversation-list-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 .conversation-list-heading h2 {
   display: flex;
@@ -1669,12 +1721,33 @@ main {
   justify-content: flex-end;
 }
 .chat-bubble {
+  position: relative;
   background: var(--surface-secondary);
   border: 1px solid var(--border);
   border-radius: 10px 10px 10px 2px;
   padding: 12px 15px 9px;
   max-width: 78%;
   min-width: 86px;
+}
+.chat-bubble-delete {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: inherit;
+  opacity: 0.55;
+}
+.chat-bubble-delete:hover {
+  opacity: 1;
+  background: rgba(0, 0, 0, 0.08);
 }
 .chat-bubble-sender {
   display: block;
@@ -1821,11 +1894,17 @@ main {
   margin-top: -31px;
   border: 5px solid var(--surface);
 }
-.profile-topline > .button {
+.profile-topline-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
   margin-top: 23px;
+}
+.profile-topline-actions > .button {
   font-size: 11px;
   min-height: 39px;
   padding-block: 9px;
+  margin-top: 0;
 }
 .profile-identity {
   display: flex;
@@ -2613,8 +2692,10 @@ main {
     margin-top: -25px;
     border-width: 4px;
   }
-  .profile-topline .button {
+  .profile-topline-actions {
     margin-top: 16px;
+  }
+  .profile-topline .button {
     min-height: 35px;
     font-size: 10px;
     padding: 8px 12px;
