@@ -5,6 +5,7 @@ import Link from "next/link";
 import {
   ArrowRight,
   FileText,
+  GalleryHorizontalEnd,
   Layers,
   Plus,
   Rocket,
@@ -151,19 +152,25 @@ export default function IncubatorPage() {
             <h1>{t("incubator.hero_title")}</h1>
             <p>{t("incubator.hero_desc")}</p>
           </div>
-          <button
-            className="button button-primary"
-            onClick={() => setIsCreating(true)}
-            style={{
-              background: "linear-gradient(135deg, var(--brand-purple) 0%, var(--brand-purple-dark) 100%)",
-              color: "#ffffff",
-              padding: "12px 20px",
-              boxShadow: "0 8px 24px var(--brand-purple-glow)",
-            }}
-          >
-            <Plus size={18} />
-            {t("incubator.create_project")}
-          </button>
+          <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+            <Link href="/incubator/gallery" className="button button-secondary">
+              <GalleryHorizontalEnd size={16} />
+              {t("incubator.view_gallery")}
+            </Link>
+            <button
+              className="button button-primary"
+              onClick={() => setIsCreating(true)}
+              style={{
+                background: "linear-gradient(135deg, var(--brand-purple) 0%, var(--brand-purple-dark) 100%)",
+                color: "#ffffff",
+                padding: "12px 20px",
+                boxShadow: "0 8px 24px var(--brand-purple-glow)",
+              }}
+            >
+              <Plus size={18} />
+              {t("incubator.create_project")}
+            </button>
+          </div>
         </div>
       </section>
 
