@@ -308,6 +308,10 @@ main {
   font-size: 12px;
   font-weight: 600;
   border: 1px solid transparent;
+  transition: transform 0.12s ease, background-color 0.15s ease, opacity 0.15s ease, border-color 0.15s ease;
+}
+.button:active:not(:disabled) {
+  transform: scale(0.96);
 }
 .button-primary {
   background: var(--primary);
@@ -333,9 +337,13 @@ main {
   border-radius: 6px;
   background: transparent;
   flex-shrink: 0;
+  transition: transform 0.12s ease, background-color 0.15s ease;
 }
 .icon-button:hover:not(:disabled) {
   background: var(--surface-secondary);
+}
+.icon-button:active:not(:disabled) {
+  transform: scale(0.9);
 }
 .small-icon {
   width: 30px;
@@ -356,6 +364,17 @@ main {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  animation: badge-pulse 2s ease-in-out infinite;
+}
+@keyframes dropdown-in {
+  from {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 .notification-dropdown {
   position: absolute;
@@ -369,6 +388,8 @@ main {
   border-radius: 10px;
   box-shadow: var(--shadow);
   z-index: 60;
+  animation: dropdown-in 0.18s cubic-bezier(0.16, 1, 0.3, 1) both;
+  transform-origin: top right;
 }
 .notification-item {
   display: flex;
@@ -532,18 +553,37 @@ main {
   color: var(--muted);
   font-size: 11px;
   font-weight: 500;
+  transition: transform 0.12s ease, background-color 0.18s ease, color 0.18s ease;
 }
 .nav-item:hover {
   color: var(--text);
   background: var(--surface-secondary);
 }
+.nav-item:active {
+  transform: scale(0.93);
+}
 .nav-item.active {
   background: var(--primary);
   color: var(--on-primary);
 }
+.nav-item .nav-icon svg {
+  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.nav-item.active .nav-icon svg {
+  transform: scale(1.08);
+}
 .nav-icon {
   position: relative;
   display: flex;
+}
+@keyframes badge-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--primary) 45%, transparent);
+  }
+  50% {
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--primary) 0%, transparent);
+  }
 }
 .nav-badge {
   position: absolute;
@@ -559,6 +599,7 @@ main {
   border: 2px solid var(--surface);
   padding: 0 2px;
   border-radius: 8px;
+  animation: badge-pulse 2s ease-in-out infinite;
   font-size: 7px;
 }
 .active .nav-badge {
@@ -709,10 +750,14 @@ main {
   color: var(--muted);
   font-size: 11px;
   min-height: 34px;
+  transition: transform 0.12s ease, background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
 }
 .filter-button:hover {
   border-color: var(--strong-border);
   color: var(--text);
+}
+.filter-button:active {
+  transform: scale(0.95);
 }
 .filter-button.selected {
   background: var(--primary);
@@ -909,6 +954,10 @@ main {
   border-radius: 999px;
   font-size: 12px;
   background: var(--surface-secondary);
+  transition: transform 0.12s ease, background-color 0.15s ease, border-color 0.15s ease;
+}
+.reaction-pill:active {
+  transform: scale(0.92);
 }
 .reaction-pill.is-active {
   border-color: var(--text);
@@ -1320,10 +1369,34 @@ main {
   max-height: calc(100dvh - 48px);
   overflow-y: auto;
   box-shadow: 0 24px 100px #0003;
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  transition:
+    transform 0.28s cubic-bezier(0.16, 1, 0.3, 1),
+    opacity 0.22s ease,
+    display 0.28s allow-discrete,
+    overlay 0.28s allow-discrete;
+}
+@starting-style {
+  .modal[open] {
+    opacity: 0;
+    transform: translateY(14px) scale(0.96);
+  }
 }
 .modal::backdrop {
   background: #0007;
   backdrop-filter: blur(3px);
+  transition:
+    background-color 0.28s ease,
+    backdrop-filter 0.28s ease,
+    display 0.28s allow-discrete,
+    overlay 0.28s allow-discrete;
+}
+@starting-style {
+  .modal[open]::backdrop {
+    background: transparent;
+    backdrop-filter: blur(0px);
+  }
 }
 .modal-heading {
   display: flex;
@@ -1668,9 +1741,13 @@ main {
   text-align: left;
   border: 1px solid transparent;
   margin-bottom: 3px;
+  transition: transform 0.12s ease, background-color 0.15s ease;
 }
 .conversation-item:hover {
   background: var(--surface-secondary);
+}
+.conversation-item:active {
+  transform: scale(0.985);
 }
 .conversation-item.selected {
   background: var(--surface-secondary);
@@ -1800,11 +1877,14 @@ main {
   background: var(--surface);
   box-shadow: var(--shadow);
   overflow: hidden;
+  animation: dropdown-in 0.18s cubic-bezier(0.16, 1, 0.3, 1) both;
+  transform-origin: top right;
 }
 .language-switch-option {
   padding: 9px 14px;
   text-align: left;
   font-size: 12px;
+  transition: background-color 0.12s ease;
   background: transparent;
 }
 .language-switch-option:hover {
@@ -2515,7 +2595,19 @@ main {
     display: none;
   }
   .header-actions {
-    gap: 7px;
+    gap: 2px;
+  }
+  .header-actions .icon-button {
+    width: 34px;
+    height: 34px;
+  }
+  .language-switch-code {
+    display: none;
+  }
+  .language-switch-trigger {
+    padding: 0;
+    width: 34px;
+    justify-content: center;
   }
   .header-profile .avatar {
     display: inline-flex;
