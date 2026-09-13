@@ -39,7 +39,7 @@ export async function PATCH(request: Request) {
     }
 
     const body = await request.json();
-    const { name, bio, skills, projectTitle, projectDescription } = body;
+    const { name, bio, skills, projectTitle, projectDescription, image } = body;
 
     if (name !== undefined && typeof name !== "string") {
       return NextResponse.json(
@@ -53,6 +53,18 @@ export async function PATCH(request: Request) {
         { status: 400 }
       );
     }
+    if (image !== undefined && typeof image !== "string") {
+      return NextResponse.json(
+        { error: "image matn bo'lishi kerak" },
+        { status: 400 }
+      );
+    }
+    if (typeof image === "string" && image.length > 3_000_000) {
+      return NextResponse.json(
+        { error: "Rasm hajmi juda katta" },
+        { status: 400 }
+      );
+    }
 
     const sets: string[] = [];
     const values: unknown[] = [];
@@ -60,6 +72,10 @@ export async function PATCH(request: Request) {
     if (name !== undefined) {
       sets.push(`name = $${i++}`);
       values.push(name.trim());
+    }
+    if (image !== undefined) {
+      sets.push(`image = $${i++}`);
+      values.push(image);
     }
     if (bio !== undefined) {
       sets.push(`bio = $${i++}`);

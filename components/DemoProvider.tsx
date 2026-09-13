@@ -57,7 +57,9 @@ interface DemoContextValue extends DemoState {
   createGroup: (name: string, memberIds: string[]) => Promise<string>;
   markNotificationsRead: () => void;
   updateProfile: (
-    profile: Pick<Peer, "name" | "bio" | "skills" | "project">,
+    profile: Pick<Peer, "name" | "bio" | "skills" | "project"> & {
+      avatar?: string;
+    },
   ) => Promise<void>;
 }
 

@@ -431,6 +431,7 @@ export async function updateMyProfile(profile: {
   bio: string;
   skills: string[];
   project: { name: string; description: string };
+  avatar?: string;
 }): Promise<Peer> {
   const updated = await sendJson<ApiPerson>("/api/users/me", "PATCH", {
     name: profile.name,
@@ -438,6 +439,7 @@ export async function updateMyProfile(profile: {
     skills: profile.skills,
     projectTitle: profile.project.name,
     projectDescription: profile.project.description,
+    ...(profile.avatar !== undefined && { image: profile.avatar }),
   });
   return toPeer(updated);
 }

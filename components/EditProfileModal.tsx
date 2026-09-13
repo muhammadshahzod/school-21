@@ -1,9 +1,12 @@
 "use client";
 
-import { Check } from "lucide-react";
-import { useState, type FormEvent } from "react";
+import { Check, Upload } from "lucide-react";
+import { useRef, useState, type FormEvent } from "react";
+import Avatar from "./Avatar";
 import Modal from "./Modal";
 import { useDemo } from "./DemoProvider";
+
+const MAX_AVATAR_BYTES = 2 * 1024 * 1024;
 
 export default function EditProfileModal({
   onClose,
@@ -16,8 +19,27 @@ export default function EditProfileModal({
   const [name, setName] = useState(user.name);
   const [bio, setBio] = useState(user.bio);
   const [skills, setSkills] = useState(user.skills.join(", "));
+  const [avatar, setAvatar] = useState(user.avatar);
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  function handleFile(file: File | undefined) {
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      setError("Faqat rasm fayllari qabul qilinadi.");
+      return;
+    }
+    if (file.size > MAX_AVATAR_BYTES) {
+      setError("Rasm hajmi 2MB dan oshmasligi kerak.");
+      return;
+    }
+    setError("");
+    const reader = new FileReader();
+    reader.onload = () => setAvatar(String(reader.result));
+    reader.readAsDataURL(file);
+  }
+
   async function submit(event: FormEvent) {
     event.preventDefault();
     if (!name.trim() || submitting) return;
@@ -36,6 +58,7 @@ export default function EditProfileModal({
           ),
         ].slice(0, 8),
         project: user.project,
+        avatar,
       });
       onSaved();
       onClose();
@@ -51,6 +74,24 @@ export default function EditProfileModal({
       onClose={onClose}
     >
       <form className="stack-form" onSubmit={submit}>
+        <div className="image-upload-row">
+          <Avatar user={{ ...user, avatar }} size="lg" />
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            hidden
+            onChange={(e) => handleFile(e.target.files?.[0])}
+          />
+          <button
+            type="button"
+            className="button button-secondary"
+            onClick={() => fileInputRef.current?.click()}
+          >
+            <Upload size={15} />
+            Rasm yuklash
+          </button>
+        </div>
         <label className="field">
           <span>Ism va familiya</span>
           <input
