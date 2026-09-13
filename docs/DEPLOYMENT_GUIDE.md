@@ -66,3 +66,4 @@ npm run dev
 npm run build && npm start
 ```
 `lib/incubatorStorage.ts` qatlami brauzer `LocalStorage` xotirasidan foydalanganligi sababli, ma'lumotlar bazasi uzilgan taqdirda ham barcha loyihalar, modullar va One-Pagerlar to'liq va uzluksiz ishlaydi.
+

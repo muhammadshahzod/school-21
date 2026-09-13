@@ -66,3 +66,4 @@ Loyihaning asosiy sahifasida 6 ta modul ketma-ket joylashgan:
 
 - Moderator/Kurator rolidagi foydalanuvchilar har qanday loyiha moduliga kirib, pastki qismdagi **"Kurator mulohazasi" (Curator Feedback)** maydonida tavsiyalar, ballar yoki tuzatishlarni yozib qoldirishlari mumkin.
 - Ushbu fikr-mulohazalar darhol loyiha jamoasiga ko'rinadi.
+
