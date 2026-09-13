@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useState } from "react";
+import { use, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -65,6 +65,24 @@ export default function ModuleAssignmentPage({
   });
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const [statusMessage, setStatusMessage] = useState("");
+  const [dirty, setDirty] = useState(false);
+
+  useEffect(() => {
+    function handleBeforeUnload(e: BeforeUnloadEvent) {
+      if (!dirty) return;
+      e.preventDefault();
+      e.returnValue = "";
+    }
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, [dirty]);
+
+  function handleBackClick(e: React.MouseEvent) {
+    if (!dirty) return;
+    if (!window.confirm(t("incubator.unsaved_changes_confirm"))) {
+      e.preventDefault();
+    }
+  }
 
   // Moderator feedback form
   const [feedbackInput, setFeedbackInput] = useState("");
@@ -85,6 +103,7 @@ export default function ModuleAssignmentPage({
   function handleFieldChange(fieldId: string, val: string) {
     setAnswers((prev) => ({ ...prev, [fieldId]: val }));
     setSaveStatus("idle");
+    setDirty(true);
   }
 
   async function handleSave(statusToSave: "draft" | "submitted") {
@@ -99,6 +118,7 @@ export default function ModuleAssignmentPage({
       setSubmissionStatus(statusToSave);
       const newVer = updatedProj.submissions[moduleId]?.version || version + 1;
       setVersion(newVer);
+      setDirty(false);
 
       // 2. Background DB persistence if online
       saveModuleSubmission(projectId, moduleId, answers, statusToSave, version).catch(() => {});
@@ -164,6 +184,7 @@ export default function ModuleAssignmentPage({
           href={`/incubator/${projectId}`}
           className="button button-secondary"
           style={{ fontSize: 13, gap: 6 }}
+          onClick={handleBackClick}
         >
           <ArrowLeft size={15} />
           {t("incubator.back_to_workspace")}

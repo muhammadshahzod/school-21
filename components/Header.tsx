@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowUpRight, Bell, LogOut, Search, ShieldCheck } from "lucide-react";
+import { usePathname } from "next/navigation";
+import { ArrowUpRight, Bell, LogOut, Rocket, Search, ShieldCheck } from "lucide-react";
 import { signOut } from "next-auth/react";
 import { useEffect, useRef, useState } from "react";
 import Avatar from "./Avatar";
@@ -94,9 +95,16 @@ function NotificationBell() {
   );
 }
 
+const HEADER_NAV_ITEMS = [
+  { href: "/feed", key: "nav.feed" },
+  { href: "/incubator", key: "nav.incubator", icon: Rocket },
+  { href: "/chat", key: "nav.chat" },
+];
+
 export default function Header() {
   const { user } = useDemo();
   const { t } = useLang();
+  const pathname = usePathname();
   const isAdmin = user.role === "admin" || user.username === "shahzod";
   const [searching, setSearching] = useState(false);
   return (
@@ -104,49 +112,21 @@ export default function Header() {
       <div className="header-inner">
         <div style={{ display: "flex", alignItems: "center", gap: 24 }}>
           <Brand />
-          <nav className="header-desktop-only" style={{ display: "flex", gap: 14 }}>
-            <Link
-              href="/feed"
-              style={{
-                fontSize: 13,
-                fontWeight: 600,
-                color: "var(--muted)",
-                padding: "6px 12px",
-                borderRadius: 8,
-              }}
-            >
-              {t("nav.feed")}
-            </Link>
-            <Link
-              href="/incubator"
-              style={{
-                fontSize: 13,
-                fontWeight: 600,
-                color: "var(--brand-purple)",
-                background: "var(--brand-purple-subtle)",
-                border: "1px solid rgba(124, 58, 237, 0.2)",
-                padding: "6px 12px",
-                borderRadius: 8,
-                display: "inline-flex",
-                alignItems: "center",
-                gap: 6,
-              }}
-            >
-              <span>🚀</span>
-              {t("nav.incubator")}
-            </Link>
-            <Link
-              href="/chat"
-              style={{
-                fontSize: 13,
-                fontWeight: 600,
-                color: "var(--muted)",
-                padding: "6px 12px",
-                borderRadius: 8,
-              }}
-            >
-              {t("nav.chat")}
-            </Link>
+          <nav className="header-desktop-only header-nav">
+            {HEADER_NAV_ITEMS.map(({ href, key, icon: Icon }) => {
+              const active = pathname.startsWith(href);
+              return (
+                <Link
+                  key={href}
+                  href={href}
+                  className={`header-nav-link ${active ? "active" : ""}`}
+                  aria-current={active ? "page" : undefined}
+                >
+                  {Icon && <Icon size={14} />}
+                  {t(key)}
+                </Link>
+              );
+            })}
           </nav>
         </div>
         <div className="campus-label">

@@ -136,7 +136,7 @@ export function getLocalProjects(): StoredProject[] {
       return DEFAULT_PROJECTS;
     }
     const parsed = JSON.parse(raw);
-    if (!Array.isArray(parsed) || parsed.length === 0) {
+    if (!Array.isArray(parsed)) {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(DEFAULT_PROJECTS));
       return DEFAULT_PROJECTS;
     }
