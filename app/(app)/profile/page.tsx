@@ -73,6 +73,12 @@ export default function ProfilePage() {
             <div className="profile-name-line">
               <h1>{user.name}</h1>
               <span className="tag">Peer</span>
+              {user.openToProjects && (
+                <span className="open-to-projects-badge">
+                  <span className="dot" />
+                  {t("profile.open_status_active")}
+                </span>
+              )}
             </div>
             <p className="profile-handle">
               @{user.username}

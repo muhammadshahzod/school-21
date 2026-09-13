@@ -39,7 +39,7 @@ export async function PATCH(request: Request) {
     }
 
     const body = await request.json();
-    const { name, bio, skills, projectTitle, projectDescription, image } = body;
+    const { name, bio, skills, projectTitle, projectDescription, image, openToProjects } = body;
 
     if (name !== undefined && typeof name !== "string") {
       return NextResponse.json(
@@ -92,6 +92,10 @@ export async function PATCH(request: Request) {
     if (projectDescription !== undefined) {
       sets.push(`project_description = $${i++}`);
       values.push(String(projectDescription).trim());
+    }
+    if (openToProjects !== undefined) {
+      sets.push(`open_to_projects = $${i++}`);
+      values.push(Boolean(openToProjects));
     }
 
     if (sets.length > 0) {

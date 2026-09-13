@@ -22,6 +22,7 @@ export default function EditProfileModal({
   const [bio, setBio] = useState(user.bio);
   const [skills, setSkills] = useState(user.skills.join(", "));
   const [avatar, setAvatar] = useState(user.avatar);
+  const [openToProjects, setOpenToProjects] = useState(user.openToProjects ?? true);
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -61,6 +62,7 @@ export default function EditProfileModal({
         ].slice(0, 8),
         project: user.project,
         avatar,
+        openToProjects,
       });
       onSaved();
       onClose();
@@ -126,6 +128,26 @@ export default function EditProfileModal({
             {t("editProfileModal.skills_hint")}
           </small>
         </label>
+
+        <div className="open-to-projects-toggle">
+          <div>
+            <div style={{ fontWeight: 600, fontSize: 14 }}>
+              {t("profile.open_to_projects")}
+            </div>
+            <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 2 }}>
+              {t("profile.open_to_projects_desc")}
+            </div>
+          </div>
+          <label style={{ display: "inline-flex", alignItems: "center", cursor: "pointer" }}>
+            <input
+              type="checkbox"
+              checked={openToProjects}
+              onChange={(e) => setOpenToProjects(e.target.checked)}
+              style={{ width: 18, height: 18, accentColor: "var(--brand-mint)", cursor: "pointer" }}
+            />
+          </label>
+        </div>
+
         {error && (
           <p className="form-error" role="alert">
             {error}

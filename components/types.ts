@@ -16,6 +16,8 @@ export interface Peer {
   online: boolean;
   bio: string;
   project: { name: string; description: string };
+  role?: "admin" | "moderator" | "user";
+  openToProjects?: boolean;
 }
 
 export interface Comment {

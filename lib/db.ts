@@ -21,6 +21,8 @@ export interface PublicUser {
   skills: string[];
   projectTitle: string;
   projectDescription: string;
+  role: "admin" | "moderator" | "user";
+  openToProjects: boolean;
   lastActiveAt: string;
   createdAt: string;
 }
@@ -35,8 +37,63 @@ interface UserRow {
   skills: string[];
   project_title: string;
   project_description: string;
+  role?: string;
+  open_to_projects?: boolean;
   last_active_at: Date;
   created_at: Date;
+}
+
+export interface IncubatorProject {
+  id: string;
+  title: string;
+  pitch: string;
+  description: string;
+  stage: "idea" | "prototype" | "mvp" | "testing" | "launched";
+  requiredSkills: string[];
+  ownerId: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface IncubatorMember {
+  projectId: string;
+  userId: string;
+  role: "owner" | "member";
+  status: "accepted" | "invited" | "declined";
+  createdAt: string;
+  user?: PublicUser;
+}
+
+export interface IncubatorSubmission {
+  id: string;
+  projectId: string;
+  moduleId: string;
+  answers: Record<string, string>;
+  status: "draft" | "submitted";
+  version: number;
+  submittedBy: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface IncubatorFeedback {
+  id: string;
+  projectId: string;
+  moduleId: string;
+  authorId: string;
+  feedback: string;
+  createdAt: string;
+  author?: PublicUser;
+}
+
+export interface IncubatorOnePager {
+  id: string;
+  projectId: string;
+  title: string;
+  snapshotData: Record<string, unknown>;
+  versionName: string;
+  createdBy: string;
+  createdAt: string;
 }
 
 export function genId(prefix: string) {
@@ -44,6 +101,7 @@ export function genId(prefix: string) {
 }
 
 export function toPublicUser(row: UserRow): PublicUser {
+  const role = (row.role as "admin" | "moderator" | "user") || (row.username === "shahzod" ? "admin" : "user");
   return {
     id: row.id,
     name: row.name,
@@ -53,6 +111,8 @@ export function toPublicUser(row: UserRow): PublicUser {
     skills: row.skills,
     projectTitle: row.project_title,
     projectDescription: row.project_description,
+    role,
+    openToProjects: row.open_to_projects ?? true,
     lastActiveAt: row.last_active_at.toISOString(),
     createdAt: row.created_at.toISOString(),
   };
@@ -140,6 +200,58 @@ export function ensureSchema(): Promise<void> {
         type TEXT NOT NULL,
         post_id TEXT REFERENCES app_posts(id) ON DELETE CASCADE,
         read BOOLEAN NOT NULL DEFAULT false,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+      );
+      ALTER TABLE app_users
+        ADD COLUMN IF NOT EXISTS role TEXT NOT NULL DEFAULT 'user',
+        ADD COLUMN IF NOT EXISTS open_to_projects BOOLEAN NOT NULL DEFAULT true;
+
+      CREATE TABLE IF NOT EXISTS incubator_projects (
+        id TEXT PRIMARY KEY,
+        title TEXT NOT NULL,
+        pitch TEXT NOT NULL DEFAULT '',
+        description TEXT NOT NULL DEFAULT '',
+        stage TEXT NOT NULL DEFAULT 'idea',
+        required_skills TEXT[] NOT NULL DEFAULT '{}',
+        owner_id TEXT NOT NULL REFERENCES app_users(id) ON DELETE CASCADE,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+      );
+      CREATE TABLE IF NOT EXISTS incubator_project_members (
+        project_id TEXT NOT NULL REFERENCES incubator_projects(id) ON DELETE CASCADE,
+        user_id TEXT NOT NULL REFERENCES app_users(id) ON DELETE CASCADE,
+        role TEXT NOT NULL DEFAULT 'member',
+        status TEXT NOT NULL DEFAULT 'accepted',
+        created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+        PRIMARY KEY (project_id, user_id)
+      );
+      CREATE TABLE IF NOT EXISTS incubator_module_submissions (
+        id TEXT PRIMARY KEY,
+        project_id TEXT NOT NULL REFERENCES incubator_projects(id) ON DELETE CASCADE,
+        module_id TEXT NOT NULL,
+        answers JSONB NOT NULL DEFAULT '{}'::jsonb,
+        status TEXT NOT NULL DEFAULT 'draft',
+        version INTEGER NOT NULL DEFAULT 1,
+        submitted_by TEXT NOT NULL REFERENCES app_users(id) ON DELETE CASCADE,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+        UNIQUE (project_id, module_id)
+      );
+      CREATE TABLE IF NOT EXISTS incubator_module_feedback (
+        id TEXT PRIMARY KEY,
+        project_id TEXT NOT NULL REFERENCES incubator_projects(id) ON DELETE CASCADE,
+        module_id TEXT NOT NULL,
+        author_id TEXT NOT NULL REFERENCES app_users(id) ON DELETE CASCADE,
+        feedback TEXT NOT NULL,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+      );
+      CREATE TABLE IF NOT EXISTS incubator_one_pagers (
+        id TEXT PRIMARY KEY,
+        project_id TEXT NOT NULL REFERENCES incubator_projects(id) ON DELETE CASCADE,
+        title TEXT NOT NULL,
+        snapshot_data JSONB NOT NULL,
+        version_name TEXT NOT NULL DEFAULT 'v1.0',
+        created_by TEXT NOT NULL REFERENCES app_users(id) ON DELETE CASCADE,
         created_at TIMESTAMPTZ NOT NULL DEFAULT now()
       );
     `).then(() => undefined);

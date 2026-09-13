@@ -74,6 +74,7 @@ interface DemoContextValue extends DemoState {
   updateProfile: (
     profile: Pick<Peer, "name" | "bio" | "skills" | "project"> & {
       avatar?: string;
+      openToProjects?: boolean;
     },
   ) => Promise<void>;
 }

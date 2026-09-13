@@ -2,12 +2,13 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { House, MessageCircle, UserRound } from "lucide-react";
+import { House, MessageCircle, Rocket, UserRound } from "lucide-react";
 import { useDemo } from "./DemoProvider";
 import { useLang } from "@/lib/useLang";
 
 const items = [
   { href: "/feed", key: "nav.feed", icon: House },
+  { href: "/incubator", key: "nav.incubator", icon: Rocket },
   { href: "/chat", key: "nav.chat", icon: MessageCircle },
   { href: "/profile", key: "nav.profile", icon: UserRound },
 ];

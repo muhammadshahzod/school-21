@@ -1,14 +1,17 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { ensureSchema, pool } from "@/lib/db";
-
-const ADMIN_ID = "u_shahzod";
+import { getUserRoleAndMembership } from "@/lib/permissions";
 
 export async function GET() {
   try {
     await ensureSchema();
     const session = await auth();
-    if (session?.user?.id !== ADMIN_ID) {
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Ruxsat yo'q" }, { status: 401 });
+    }
+    const { role } = await getUserRoleAndMembership(session.user.id);
+    if (role !== "admin") {
       return NextResponse.json({ error: "Ruxsat yo'q" }, { status: 403 });
     }
 

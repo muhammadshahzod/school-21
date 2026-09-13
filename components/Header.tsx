@@ -97,12 +97,58 @@ function NotificationBell() {
 export default function Header() {
   const { user } = useDemo();
   const { t } = useLang();
-  const isAdmin = user.username === "shahzod";
+  const isAdmin = user.role === "admin" || user.username === "shahzod";
   const [searching, setSearching] = useState(false);
   return (
     <header className="site-header">
       <div className="header-inner">
-        <Brand />
+        <div style={{ display: "flex", alignItems: "center", gap: 24 }}>
+          <Brand />
+          <nav className="header-desktop-only" style={{ display: "flex", gap: 14 }}>
+            <Link
+              href="/feed"
+              style={{
+                fontSize: 13,
+                fontWeight: 600,
+                color: "var(--muted)",
+                padding: "6px 12px",
+                borderRadius: 8,
+              }}
+            >
+              {t("nav.feed")}
+            </Link>
+            <Link
+              href="/incubator"
+              style={{
+                fontSize: 13,
+                fontWeight: 600,
+                color: "var(--brand-purple)",
+                background: "var(--brand-purple-subtle)",
+                border: "1px solid rgba(124, 58, 237, 0.2)",
+                padding: "6px 12px",
+                borderRadius: 8,
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 6,
+              }}
+            >
+              <span>🚀</span>
+              {t("nav.incubator")}
+            </Link>
+            <Link
+              href="/chat"
+              style={{
+                fontSize: 13,
+                fontWeight: 600,
+                color: "var(--muted)",
+                padding: "6px 12px",
+                borderRadius: 8,
+              }}
+            >
+              {t("nav.chat")}
+            </Link>
+          </nav>
+        </div>
         <div className="campus-label">
           <span className="status-dot" />
           {t("header.campus")}

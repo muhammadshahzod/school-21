@@ -17,6 +17,8 @@ type ApiPerson = {
   skills: string[];
   projectTitle: string | null;
   projectDescription: string | null;
+  role?: "admin" | "moderator" | "user";
+  openToProjects?: boolean;
   lastActiveAt: string;
   email?: string;
 };
@@ -89,7 +91,7 @@ async function fetchJson<T>(url: string): Promise<T> {
 
 async function sendJson<T>(
   url: string,
-  method: "POST" | "PATCH" | "DELETE",
+  method: "POST" | "PUT" | "PATCH" | "DELETE",
   body?: unknown
 ): Promise<T> {
   const res = await fetch(url, {
@@ -144,6 +146,8 @@ function toPeer(u: ApiPerson): Peer {
       name: u.projectTitle ?? "",
       description: u.projectDescription ?? "",
     },
+    role: u.role ?? (u.username === "shahzod" ? "admin" : "user"),
+    openToProjects: u.openToProjects ?? true,
   };
 }
 
@@ -439,6 +443,7 @@ export async function updateMyProfile(profile: {
   skills: string[];
   project: { name: string; description: string };
   avatar?: string;
+  openToProjects?: boolean;
 }): Promise<Peer> {
   const updated = await sendJson<ApiPerson>("/api/users/me", "PATCH", {
     name: profile.name,
@@ -447,6 +452,9 @@ export async function updateMyProfile(profile: {
     projectTitle: profile.project.name,
     projectDescription: profile.project.description,
     ...(profile.avatar !== undefined && { image: profile.avatar }),
+    ...(profile.openToProjects !== undefined && {
+      openToProjects: profile.openToProjects,
+    }),
   });
   return toPeer(updated);
 }
@@ -488,4 +496,198 @@ export async function changePassword(
     currentPassword,
     newPassword,
   });
+}
+
+// Open to projects toggle
+export async function updateOpenToProjects(openToProjects: boolean): Promise<Peer> {
+  const me = await sendJson<ApiPerson>("/api/users/me", "PATCH", {
+    openToProjects,
+  });
+  return toPeer(me);
+}
+
+// Launch Lab 21 API
+export interface ApiIncubatorProject {
+  id: string;
+  title: string;
+  pitch: string;
+  description: string;
+  stage: "idea" | "prototype" | "mvp" | "testing" | "launched";
+  requiredSkills: string[];
+  ownerId: string;
+  createdAt: string;
+  updatedAt: string;
+  owner?: ApiPerson;
+  membersCount?: number;
+  completedModulesCount?: number;
+  percentage?: number;
+  isMember?: boolean;
+  memberRole?: "owner" | "member";
+}
+
+export interface ApiProjectDetail extends ApiIncubatorProject {
+  members: {
+    projectId: string;
+    userId: string;
+    role: "owner" | "member";
+    status: "accepted" | "invited" | "declined";
+    user: ApiPerson;
+  }[];
+  submissions: {
+    id: string;
+    projectId: string;
+    moduleId: string;
+    status: "draft" | "submitted";
+    version: number;
+    updatedAt: string;
+  }[];
+}
+
+export async function getIncubatorProjects(
+  filter: "all" | "my" = "all"
+): Promise<ApiIncubatorProject[]> {
+  return fetchJson<ApiIncubatorProject[]>(
+    `/api/incubator/projects?filter=${filter}`
+  );
+}
+
+export async function getIncubatorProject(id: string): Promise<ApiProjectDetail> {
+  return fetchJson<ApiProjectDetail>(`/api/incubator/projects/${id}`);
+}
+
+export async function createIncubatorProject(payload: {
+  title: string;
+  pitch: string;
+  description: string;
+  stage?: string;
+  requiredSkills?: string[];
+}): Promise<ApiIncubatorProject> {
+  return sendJson<ApiIncubatorProject>("/api/incubator/projects", "POST", payload);
+}
+
+export async function updateIncubatorProject(
+  id: string,
+  payload: Partial<{
+    title: string;
+    pitch: string;
+    description: string;
+    stage: string;
+    requiredSkills: string[];
+  }>
+): Promise<ApiIncubatorProject> {
+  return sendJson<ApiIncubatorProject>(
+    `/api/incubator/projects/${id}`,
+    "PATCH",
+    payload
+  );
+}
+
+export async function inviteProjectMember(
+  projectId: string,
+  userId: string
+): Promise<void> {
+  await sendJson(`/api/incubator/projects/${projectId}/members`, "POST", {
+    userId,
+  });
+}
+
+export async function removeProjectMember(
+  projectId: string,
+  userId: string
+): Promise<void> {
+  await sendJson(`/api/incubator/projects/${projectId}/members`, "DELETE", {
+    userId,
+  });
+}
+
+export interface ApiModuleSubmissionData {
+  submission: {
+    id: string;
+    projectId: string;
+    moduleId: string;
+    answers: Record<string, string>;
+    status: "draft" | "submitted";
+    version: number;
+    updatedAt: string;
+  } | null;
+  feedbacks: {
+    id: string;
+    projectId: string;
+    moduleId: string;
+    feedback: string;
+    createdAt: string;
+    author: ApiPerson;
+  }[];
+  canEdit: boolean;
+  canFeedback: boolean;
+}
+
+export async function getModuleSubmission(
+  projectId: string,
+  moduleId: string
+): Promise<ApiModuleSubmissionData> {
+  return fetchJson<ApiModuleSubmissionData>(
+    `/api/incubator/projects/${projectId}/modules/${moduleId}`
+  );
+}
+
+export async function saveModuleSubmission(
+  projectId: string,
+  moduleId: string,
+  answers: Record<string, string>,
+  status: "draft" | "submitted",
+  version: number
+): Promise<{ success: boolean; version: number; status: string }> {
+  return sendJson<{ success: boolean; version: number; status: string }>(
+    `/api/incubator/projects/${projectId}/modules/${moduleId}`,
+    "PUT",
+    { answers, status, version }
+  );
+}
+
+export async function addModuleFeedback(
+  projectId: string,
+  moduleId: string,
+  feedback: string
+): Promise<{ id: string; feedback: string }> {
+  return sendJson<{ id: string; feedback: string }>(
+    `/api/incubator/projects/${projectId}/modules/${moduleId}/feedback`,
+    "POST",
+    { feedback }
+  );
+}
+
+export interface OnePagerData {
+  project: ApiIncubatorProject;
+  members: ApiPerson[];
+  submissions: Record<string, Record<string, string>>;
+  submissionStatuses: Record<string, string>;
+  progress: {
+    completed: number;
+    total: number;
+    percentage: number;
+  };
+}
+
+export async function getOnePagerData(projectId: string): Promise<OnePagerData> {
+  return fetchJson<OnePagerData>(`/api/incubator/projects/${projectId}/one-pager`);
+}
+
+export async function saveOnePagerSnapshot(
+  projectId: string,
+  versionName: string
+): Promise<{ id: string }> {
+  return sendJson<{ id: string }>(
+    `/api/incubator/projects/${projectId}/snapshots`,
+    "POST",
+    { versionName }
+  );
+}
+
+export async function getOnePagerSnapshots(
+  projectId: string
+): Promise<{ id: string; title: string; versionName: string; createdAt: string }[]> {
+  return fetchJson<
+    { id: string; title: string; versionName: string; createdAt: string }[]
+  >(`/api/incubator/projects/${projectId}/snapshots`);
 }
