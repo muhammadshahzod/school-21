@@ -2,14 +2,16 @@
 
 import { ImageOff } from "lucide-react";
 import { useState } from "react";
+import { useLang } from "@/lib/useLang";
 
 export default function PostImage({ src, alt }: { src: string; alt: string }) {
   const [failed, setFailed] = useState(false);
+  const { t } = useLang();
   if (failed)
     return (
       <div className="image-fallback">
         <ImageOff size={26} />
-        <span>Rasmni yuklab bo‘lmadi</span>
+        <span>{t("postCard.image_load_failed")}</span>
       </div>
     );
   // User-entered HTTP(S) image URLs are displayed directly for this frontend demo.

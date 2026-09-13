@@ -6,10 +6,12 @@ import { useRouter } from "next/navigation";
 import Avatar from "./Avatar";
 import Modal from "./Modal";
 import { useDemo } from "./DemoProvider";
+import { useLang } from "@/lib/useLang";
 
 export default function GlobalSearchModal({ onClose }: { onClose: () => void }) {
   const router = useRouter();
   const { peers, posts } = useDemo();
+  const { t } = useLang();
   const [query, setQuery] = useState("");
   const trimmed = query.trim();
   const q = trimmed.toLocaleLowerCase();
@@ -40,8 +42,8 @@ export default function GlobalSearchModal({ onClose }: { onClose: () => void }) 
 
   return (
     <Modal
-      title="Qidiruv"
-      description="Post, pir yoki skill bo‘yicha butun platformadan qidiring."
+      title={t("globalSearchModal.title")}
+      description={t("globalSearchModal.desc")}
       onClose={onClose}
     >
       <form onSubmit={goToFeed} className="stack-form">
@@ -50,8 +52,8 @@ export default function GlobalSearchModal({ onClose }: { onClose: () => void }) 
           <input
             autoFocus
             type="search"
-            placeholder="Qidirish…"
-            aria-label="Butun platformadan qidirish"
+            placeholder={t("globalSearchModal.placeholder")}
+            aria-label={t("globalSearchModal.placeholder")}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
           />
@@ -64,9 +66,11 @@ export default function GlobalSearchModal({ onClose }: { onClose: () => void }) 
           >
             <Newspaper size={17} />
             <span>
-              “{trimmed}” bo‘yicha postlarda qidirish
+              {t("globalSearchModal.search_posts", { q: trimmed })}
               {matchingPostsCount > 0 && (
-                <span className="muted"> · {matchingPostsCount} ta topildi</span>
+                <span className="muted">
+                  {t("globalSearchModal.found_count", { n: matchingPostsCount })}
+                </span>
               )}
             </span>
           </button>
@@ -79,19 +83,32 @@ export default function GlobalSearchModal({ onClose }: { onClose: () => void }) 
                 type="button"
                 className="group-member-option"
                 onClick={() => {
-                  router.push(`/chat?peer=${peer.id}`);
+                  router.push(`/peer/${peer.id}`);
                   onClose();
                 }}
               >
                 <Avatar user={peer} size="sm" showStatus />
                 <span>{peer.name}</span>
-                <MessageCircle size={15} style={{ marginLeft: "auto" }} />
+                <span
+                  className="icon-button small-icon"
+                  role="button"
+                  tabIndex={0}
+                  aria-label={t("globalSearchModal.message_aria", { name: peer.name })}
+                  style={{ marginLeft: "auto" }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    router.push(`/chat?peer=${peer.id}`);
+                    onClose();
+                  }}
+                >
+                  <MessageCircle size={15} />
+                </span>
               </button>
             ))}
           </div>
         )}
         {q && matchedPeers.length === 0 && matchingPostsCount === 0 && (
-          <p className="muted small">Hech narsa topilmadi.</p>
+          <p className="muted small">{t("globalSearchModal.not_found")}</p>
         )}
       </form>
     </Modal>

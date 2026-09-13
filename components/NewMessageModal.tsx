@@ -5,6 +5,7 @@ import { useState } from "react";
 import Avatar from "./Avatar";
 import Modal from "./Modal";
 import { useDemo } from "./DemoProvider";
+import { useLang } from "@/lib/useLang";
 import type { Peer } from "./types";
 
 export default function NewMessageModal({
@@ -15,6 +16,7 @@ export default function NewMessageModal({
   onSelect: (peer: Peer) => void;
 }) {
   const { peers } = useDemo();
+  const { t } = useLang();
   const [search, setSearch] = useState("");
   const [skill, setSkill] = useState<string | null>(null);
   const allSkills = Array.from(new Set(peers.flatMap((p) => p.skills))).sort();
@@ -28,8 +30,8 @@ export default function NewMessageModal({
 
   return (
     <Modal
-      title="Yangi xabar"
-      description="Suhbatlashmoqchi bo‘lgan pirni tanlang."
+      title={t("newMessageModal.title")}
+      description={t("newMessageModal.desc")}
       onClose={onClose}
     >
       <div className="stack-form">
@@ -38,8 +40,8 @@ export default function NewMessageModal({
           <input
             autoFocus
             type="search"
-            placeholder="Pirni qidirish…"
-            aria-label="Pirni qidirish"
+            placeholder={t("newMessageModal.search_placeholder")}
+            aria-label={t("newMessageModal.search_placeholder")}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
@@ -51,7 +53,7 @@ export default function NewMessageModal({
               className={`filter-button ${skill === null ? "selected" : ""}`}
               onClick={() => setSkill(null)}
             >
-              Barchasi
+              {t("newMessageModal.all")}
             </button>
             {allSkills.map((item) => (
               <button
@@ -78,7 +80,7 @@ export default function NewMessageModal({
             </button>
           ))}
           {filtered.length === 0 && (
-            <p className="muted small">Hech kim topilmadi.</p>
+            <p className="muted small">{t("newMessageModal.not_found")}</p>
           )}
         </div>
       </div>

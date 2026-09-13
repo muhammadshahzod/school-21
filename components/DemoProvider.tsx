@@ -39,6 +39,7 @@ import {
   updateMyProfile,
   type AppNotification,
 } from "@/lib/api";
+import { useLang } from "@/lib/useLang";
 import type { Community, Conversation, Message, Peer, Post } from "./types";
 
 interface DemoState {
@@ -91,6 +92,7 @@ const timeNow = () =>
 
 export function DemoProvider({ children }: { children: ReactNode }) {
   const { status } = useSession();
+  const { t } = useLang();
   const [data, setData] = useState<DemoState | null>(null);
   const [error, setError] = useState(false);
   const [attempt, setAttempt] = useState(0);
@@ -130,16 +132,16 @@ export function DemoProvider({ children }: { children: ReactNode }) {
             id: GENERAL_CHANNEL_ID,
             peer: {
               id: GENERAL_CHANNEL_ID,
-              name: "# general",
+              name: t("demoProvider.general_channel_name"),
               username: "",
               avatar: "",
               skills: [],
               online: false,
-              bio: "Hammaga ochiq kanal",
+              bio: t("demoProvider.general_channel_bio"),
               project: { name: "", description: "" },
             },
             isGroup: true,
-            lastMessage: lastGeneral?.text ?? "Hali xabar yo‘q",
+            lastMessage: lastGeneral?.text ?? t("demoProvider.no_messages_yet"),
             time: lastGeneral?.time ?? "",
             unread: 0,
           };
@@ -161,6 +163,10 @@ export function DemoProvider({ children }: { children: ReactNode }) {
     return () => {
       active = false;
     };
+    // `t` is intentionally omitted: it only labels the synthetic #general
+    // conversation, and refetching all app data on every language switch
+    // would be wasteful and would blow away local optimistic state.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [status, attempt]);
 
   const markRead = useCallback(
@@ -195,7 +201,7 @@ export function DemoProvider({ children }: { children: ReactNode }) {
     return (
       <div className="loading-screen" role="status">
         <span className="loading-mark">21</span>
-        <p>Davrangiz tayyorlanmoqda…</p>
+        <p>{t("demoProvider.loading")}</p>
       </div>
     );
 
@@ -203,9 +209,9 @@ export function DemoProvider({ children }: { children: ReactNode }) {
     return (
       <div className="loading-screen" role="status">
         <span className="loading-mark">21</span>
-        <p>Davom etish uchun tizimga kiring.</p>
+        <p>{t("demoProvider.unauthenticated")}</p>
         <a className="button button-primary" href="/login">
-          Kirishga o‘tish
+          {t("demoProvider.go_to_login")}
         </a>
       </div>
     );
@@ -214,7 +220,7 @@ export function DemoProvider({ children }: { children: ReactNode }) {
     return (
       <div className="loading-screen" role="status">
         <span className="loading-mark">21</span>
-        <p>Ma’lumotlarni yuklab bo‘lmadi.</p>
+        <p>{t("demoProvider.load_error")}</p>
         <button
           className="button button-primary"
           onClick={() => {
@@ -222,7 +228,7 @@ export function DemoProvider({ children }: { children: ReactNode }) {
             setAttempt((n) => n + 1);
           }}
         >
-          Qayta urinish
+          {t("demoProvider.retry")}
         </button>
       </div>
     );
@@ -251,7 +257,7 @@ export function DemoProvider({ children }: { children: ReactNode }) {
       setData((prev) => prev && { ...prev, posts: prev.posts.filter((p) => p.id !== id) });
       apiDeletePost(id).catch(() => {
         setData((prev) => prev && { ...prev, posts: previous });
-        setActionError("Postni o'chirishda xatolik yuz berdi.");
+        setActionError(t("demoProvider.err_post_delete"));
       });
     },
     async editPost(id, text, skill, image) {
@@ -274,7 +280,7 @@ export function DemoProvider({ children }: { children: ReactNode }) {
       }));
       toggleLikePost(id).catch(() => {
         updatePost(id, () => previous);
-        setActionError("Like bosishda xatolik yuz berdi.");
+        setActionError(t("demoProvider.err_like"));
       });
     },
     toggleSave(id) {
@@ -283,7 +289,7 @@ export function DemoProvider({ children }: { children: ReactNode }) {
       updatePost(id, (post) => ({ ...post, saved: !post.saved }));
       toggleSavePost(id).catch(() => {
         updatePost(id, () => previous);
-        setActionError("Saqlashda xatolik yuz berdi.");
+        setActionError(t("demoProvider.err_save"));
       });
     },
     toggleReaction(id, emoji) {
@@ -315,7 +321,7 @@ export function DemoProvider({ children }: { children: ReactNode }) {
         })
         .catch(() => {
           updatePost(id, () => previous);
-          setActionError("Reaktsiya qo'shishda xatolik yuz berdi.");
+          setActionError(t("demoProvider.err_reaction"));
         });
     },
     addComment(id, text) {
@@ -328,7 +334,7 @@ export function DemoProvider({ children }: { children: ReactNode }) {
           }));
         })
         .catch(() => {
-          setActionError("Komment qo‘shishda xatolik yuz berdi.");
+          setActionError(t("demoProvider.err_comment"));
         });
     },
     sendMessage(conversationId, text) {
@@ -388,7 +394,7 @@ export function DemoProvider({ children }: { children: ReactNode }) {
                 messages: prev.messages.filter((m) => m.id !== tempId),
               },
           );
-          setActionError("Xabar yuborishda xatolik yuz berdi.");
+          setActionError(t("demoProvider.err_message"));
         });
     },
     deleteMessage(id) {
@@ -402,7 +408,7 @@ export function DemoProvider({ children }: { children: ReactNode }) {
       );
       apiDeleteMessage(id).catch(() => {
         setData((prev) => prev && { ...prev, messages: previous });
-        setActionError("Xabarni o'chirishda xatolik yuz berdi.");
+        setActionError(t("demoProvider.err_message_delete"));
       });
     },
     markRead,
@@ -471,7 +477,7 @@ export function DemoProvider({ children }: { children: ReactNode }) {
           <button
             className="icon-button small-icon"
             onClick={() => setActionError(null)}
-            aria-label="Yopish"
+            aria-label={t("demoProvider.dismiss")}
           >
             <X size={15} />
           </button>

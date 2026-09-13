@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import IntroOverlay from "@/components/IntroOverlay";
+import SkipLink from "@/components/SkipLink";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -18,6 +19,7 @@ export const viewport: Viewport = {
 };
 
 const themeScript = `(function(){try{var t=localStorage.getItem('peer-space-theme');document.documentElement.dataset.theme=t==='dark'||(!t&&window.matchMedia('(prefers-color-scheme: dark)').matches)?'dark':'light'}catch(e){}})()`;
+const langScript = `(function(){try{var l=localStorage.getItem('peer-space-lang');if(l==='ru'||l==='en'||l==='uz'){document.documentElement.dataset.lang=l;document.documentElement.lang=l}}catch(e){}})()`;
 
 export default function RootLayout({
   children,
@@ -26,11 +28,10 @@ export default function RootLayout({
     <html lang="uz" suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+        <script dangerouslySetInnerHTML={{ __html: langScript }} />
       </head>
       <body>
-        <a href="#main-content" className="skip-link">
-          Asosiy mazmunga o‘tish
-        </a>
+        <SkipLink />
         <IntroOverlay />
         {children}
       </body>

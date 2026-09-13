@@ -6,8 +6,10 @@ import { signOut } from "next-auth/react";
 import { useEffect, useRef, useState } from "react";
 import Avatar from "./Avatar";
 import GlobalSearchModal from "./GlobalSearchModal";
+import LanguageSwitch from "./LanguageSwitch";
 import ThemeToggle from "./ThemeToggle";
 import { useDemo } from "./DemoProvider";
+import { useLang } from "@/lib/useLang";
 
 export function Brand() {
   return (
@@ -24,17 +26,18 @@ export function Brand() {
   );
 }
 
-function notificationText(type: string): string {
-  if (type === "like") return "postingizni yoqtirdi";
-  if (type === "comment") return "postingizga izoh qoldirdi";
-  return "sizga xabar yubordi";
-}
-
 function NotificationBell() {
   const { notifications, markNotificationsRead } = useDemo();
+  const { t } = useLang();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const unread = notifications.filter((n) => !n.read).length;
+
+  function notificationText(type: string): string {
+    if (type === "like") return t("header.notif_like");
+    if (type === "comment") return t("header.notif_comment");
+    return t("header.notif_message");
+  }
 
   useEffect(() => {
     function onDocClick(event: MouseEvent) {
@@ -50,8 +53,8 @@ function NotificationBell() {
     <div ref={ref} style={{ position: "relative" }}>
       <button
         className="icon-button"
-        aria-label="Bildirishnomalar"
-        title="Bildirishnomalar"
+        aria-label={t("header.notifications")}
+        title={t("header.notifications")}
         onClick={() => {
           setOpen((v) => !v);
           if (!open && unread > 0) markNotificationsRead();
@@ -64,7 +67,7 @@ function NotificationBell() {
         <div className="notification-dropdown">
           {notifications.length === 0 ? (
             <p className="muted small" style={{ padding: 14 }}>
-              Hozircha bildirishnoma yo‘q.
+              {t("header.no_notifications")}
             </p>
           ) : (
             notifications.slice(0, 20).map((n) => (
@@ -92,6 +95,7 @@ function NotificationBell() {
 
 export default function Header() {
   const { user } = useDemo();
+  const { t } = useLang();
   const [searching, setSearching] = useState(false);
   return (
     <header className="site-header">
@@ -99,22 +103,28 @@ export default function Header() {
         <Brand />
         <div className="campus-label">
           <span className="status-dot" />
-          Toshkent kampusi
+          {t("header.campus")}
           <ArrowUpRight size={13} />
         </div>
         <div className="header-actions">
           <button
             className="icon-button"
-            aria-label="Qidirish"
-            title="Qidirish"
+            aria-label={t("header.search")}
+            title={t("header.search")}
             onClick={() => setSearching(true)}
           >
             <Search size={18} />
           </button>
+          <LanguageSwitch />
           <ThemeToggle />
           <NotificationBell />
           {user.username === "shahzod" && (
-            <Link href="/admin" className="icon-button" aria-label="Admin panel" title="Admin panel">
+            <Link
+              href="/admin"
+              className="icon-button"
+              aria-label={t("header.admin_panel")}
+              title={t("header.admin_panel")}
+            >
               <ShieldCheck size={18} />
             </Link>
           )}
@@ -122,7 +132,7 @@ export default function Header() {
           <Link
             href="/profile"
             className="header-profile"
-            aria-label="Mening profilim"
+            aria-label={t("header.my_profile")}
           >
             <Avatar user={user} size="sm" />
             <span>{user.name.split(" ")[0]}</span>
@@ -130,8 +140,8 @@ export default function Header() {
           <button
             className="icon-button"
             onClick={() => signOut({ callbackUrl: "/login" })}
-            aria-label="Chiqish"
-            title="Akkauntdan chiqish"
+            aria-label={t("header.logout")}
+            title={t("header.logout_title")}
           >
             <LogOut size={18} />
           </button>

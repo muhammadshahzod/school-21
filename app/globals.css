@@ -36,6 +36,33 @@
   color-scheme: dark;
 }
 
+/* Circular-reveal animation when the theme is switched (ThemeToggle.tsx
+   sets --theme-toggle-x/y/r to the click position before starting the
+   transition). Falls back silently where View Transitions aren't supported. */
+::view-transition-old(root) {
+  animation: none;
+}
+::view-transition-new(root) {
+  animation: theme-reveal 0.55s ease;
+}
+@keyframes theme-reveal {
+  from {
+    clip-path: circle(0px at var(--theme-toggle-x, 50%) var(--theme-toggle-y, 50%));
+  }
+  to {
+    clip-path: circle(
+      var(--theme-toggle-r, 150%) at var(--theme-toggle-x, 50%)
+        var(--theme-toggle-y, 50%)
+    );
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation: none;
+  }
+}
+
 * {
   box-sizing: border-box;
 }
@@ -1748,6 +1775,52 @@ main {
   font-weight: 600;
   margin-bottom: 4px;
 }
+.language-switch-trigger {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  width: auto;
+  padding: 0 8px;
+}
+.language-switch-code {
+  font-size: 10px;
+  font-weight: 650;
+  letter-spacing: 0.3px;
+}
+.language-switch-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 60;
+  display: flex;
+  flex-direction: column;
+  min-width: 110px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+.language-switch-option {
+  padding: 9px 14px;
+  text-align: left;
+  font-size: 12px;
+  background: transparent;
+}
+.language-switch-option:hover {
+  background: var(--surface-secondary);
+}
+.language-switch-option.is-active {
+  font-weight: 650;
+  background: var(--surface-secondary);
+}
+.chat-header-name-link {
+  color: inherit;
+  text-decoration: none;
+}
+.chat-header-name-link:hover {
+  text-decoration: underline;
+}
 .chat-header .small {
   font-size: 10px;
 }
@@ -2157,6 +2230,12 @@ main {
   border-radius: 10px;
   overflow: hidden;
   min-height: 690px;
+}
+.login-language-switch {
+  position: fixed;
+  top: 18px;
+  right: 18px;
+  z-index: 50;
 }
 .login-art {
   display: flex;

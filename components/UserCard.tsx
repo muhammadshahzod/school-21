@@ -4,6 +4,7 @@ import Link from "next/link";
 import { ArrowUpRight, MapPin } from "lucide-react";
 import Avatar from "./Avatar";
 import type { Peer } from "./types";
+import { useLang } from "@/lib/useLang";
 
 export default function UserCard({
   user,
@@ -12,8 +13,9 @@ export default function UserCard({
   user: Peer;
   postCount?: number;
 }) {
+  const { t } = useLang();
   return (
-    <section className="user-card" aria-label="Mening profilim">
+    <section className="user-card" aria-label={t("userCard.my_profile_link")}>
       <div className="user-cover">
         <span>LEARN. BUILD. REPEAT.</span>
         <span className="cover-number" aria-hidden="true">
@@ -29,7 +31,7 @@ export default function UserCard({
         <p className="muted small">@{user.username}</p>
         <p className="location">
           <MapPin size={13} />
-          School 21, Toshkent
+          {t("userCard.location")}
         </p>
         <div className="tag-list">
           {user.skills.map((skill) => (
@@ -41,19 +43,19 @@ export default function UserCard({
         <div className="user-card-stats">
           <div>
             <strong>{postCount}</strong>
-            <span>post</span>
+            <span>{t("userCard.post")}</span>
           </div>
           <div>
             <strong>{user.skills.length}</strong>
-            <span>skill</span>
+            <span>{t("userCard.skill")}</span>
           </div>
           <div>
             <strong>1</strong>
-            <span>loyiha</span>
+            <span>{t("userCard.project")}</span>
           </div>
         </div>
         <Link href="/profile" className="user-profile-link">
-          Mening profilim
+          {t("userCard.my_profile_link")}
           <ArrowUpRight size={16} />
         </Link>
       </div>

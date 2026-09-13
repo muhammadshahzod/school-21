@@ -4,6 +4,7 @@ import { MessageSquare, Trash2, TrendingUp, UserPlus, Users } from "lucide-react
 import { useEffect, useState, type FormEvent } from "react";
 import Avatar from "@/components/Avatar";
 import { useDemo } from "@/components/DemoProvider";
+import { useLang } from "@/lib/useLang";
 
 interface AdminUser {
   id: string;
@@ -30,6 +31,7 @@ interface AdminStats {
 
 export default function AdminPage() {
   const { user } = useDemo();
+  const { t } = useLang();
   const isAdmin = user.username === "shahzod";
 
   const [users, setUsers] = useState<AdminUser[] | null>(null);
@@ -47,7 +49,7 @@ export default function AdminPage() {
       if (!res.ok) throw new Error();
       setUsers(await res.json());
     } catch {
-      setLoadError("Foydalanuvchilarni yuklab bo‘lmadi.");
+      setLoadError(t("admin.load_error"));
     }
   }
 
@@ -63,7 +65,7 @@ export default function AdminPage() {
         if (active) setUsers(data);
       })
       .catch(() => {
-        if (active) setLoadError("Foydalanuvchilarni yuklab bo‘lmadi.");
+        if (active) setLoadError(t("admin.load_error"));
       });
     fetch("/api/admin/stats")
       .then((res) => {
@@ -77,14 +79,14 @@ export default function AdminPage() {
     return () => {
       active = false;
     };
-  }, [isAdmin]);
+  }, [isAdmin, t]);
 
   if (!isAdmin) {
     return (
       <div className="page-container">
         <div className="empty-state">
-          <h2>Ruxsat yo‘q</h2>
-          <p>Bu sahifa faqat admin uchun.</p>
+          <h2>{t("admin.no_access_title")}</h2>
+          <p>{t("admin.no_access_desc")}</p>
         </div>
       </div>
     );
@@ -102,20 +104,22 @@ export default function AdminPage() {
         body: JSON.stringify({ username, password, name }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data?.error || "Xatolik");
+      if (!res.ok) throw new Error(data?.error || t("admin.generic_error"));
       setUsername("");
       setPassword("");
       setName("");
       await loadUsers();
     } catch (error) {
-      setFormError(error instanceof Error ? error.message : "Xatolik yuz berdi");
+      setFormError(
+        error instanceof Error ? error.message : t("admin.generic_error"),
+      );
     } finally {
       setSubmitting(false);
     }
   }
 
   async function remove(id: string) {
-    if (!confirm("Bu foydalanuvchini o‘chirmoqchimisiz?")) return;
+    if (!confirm(t("admin.delete_confirm"))) return;
     await fetch(`/api/admin/users/${id}`, { method: "DELETE" });
     await loadUsers();
   }
@@ -126,10 +130,10 @@ export default function AdminPage() {
         <div>
           <div className="eyebrow intro-eyebrow">
             <span className="tiny-square" />
-            ADMIN PANEL
+            {t("admin.eyebrow")}
           </div>
-          <h1>Foydalanuvchilar.</h1>
-          <p>Yangi login/parol qo‘shing yoki mavjudlarini o‘chiring.</p>
+          <h1>{t("admin.heading")}</h1>
+          <p>{t("admin.subtitle")}</p>
         </div>
       </section>
 
@@ -138,39 +142,39 @@ export default function AdminPage() {
           <div className="admin-stat-card">
             <Users size={18} />
             <strong>{stats.totalUsers}</strong>
-            <span>Foydalanuvchilar</span>
+            <span>{t("admin.stat_users")}</span>
           </div>
           <div className="admin-stat-card">
             <TrendingUp size={18} />
             <strong>{stats.totalPosts}</strong>
-            <span>Postlar</span>
+            <span>{t("admin.stat_posts")}</span>
           </div>
           <div className="admin-stat-card">
             <MessageSquare size={18} />
             <strong>{stats.totalComments}</strong>
-            <span>Kommentlar</span>
+            <span>{t("admin.stat_comments")}</span>
           </div>
           <div className="admin-stat-card">
             <TrendingUp size={18} />
             <strong>{stats.totalLikes}</strong>
-            <span>Layklar</span>
+            <span>{t("admin.stat_likes")}</span>
           </div>
           <div className="admin-stat-card">
             <MessageSquare size={18} />
             <strong>{stats.totalMessages}</strong>
-            <span>Xabarlar</span>
+            <span>{t("admin.stat_messages")}</span>
           </div>
           <div className="admin-stat-card">
             <Users size={18} />
             <strong>{stats.totalGroups}</strong>
-            <span>Guruhlar</span>
+            <span>{t("admin.stat_groups")}</span>
           </div>
         </div>
       )}
 
       {stats && stats.topPosters.length > 0 && (
         <div className="admin-top-posters">
-          <h2>Eng faol pirlar</h2>
+          <h2>{t("admin.top_posters")}</h2>
           <div className="conversation-list" style={{ maxWidth: 420 }}>
             {stats.topPosters.map((poster, index) => (
               <div key={poster.id} className="conversation-item" style={{ cursor: "default" }}>
@@ -187,7 +191,9 @@ export default function AdminPage() {
                     <span>@{poster.username}</span>
                   </span>
                 </span>
-                <span className="tag">{poster.postCount} post</span>
+                <span className="tag">
+                  {poster.postCount} {t("admin.post_suffix")}
+                </span>
               </div>
             ))}
           </div>
@@ -196,30 +202,30 @@ export default function AdminPage() {
 
       <form onSubmit={submit} className="stack-form" style={{ maxWidth: 420, marginBottom: 32 }}>
         <label className="field">
-          <span>Login</span>
+          <span>{t("admin.label_username")}</span>
           <input
             value={username}
             onChange={(e) => setUsername(e.target.value)}
-            placeholder="masalan: bekzod"
+            placeholder={t("admin.placeholder_username")}
             required
           />
         </label>
         <label className="field">
-          <span>Parol</span>
+          <span>{t("admin.label_password")}</span>
           <input
             type="text"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            placeholder="kamida 4 belgi"
+            placeholder={t("admin.placeholder_password")}
             required
           />
         </label>
         <label className="field">
-          <span>Ism (ixtiyoriy)</span>
+          <span>{t("admin.label_name")}</span>
           <input
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="Bekzod Aliyev"
+            placeholder={t("admin.placeholder_name")}
           />
         </label>
         {formError && (
@@ -233,7 +239,7 @@ export default function AdminPage() {
           disabled={!username.trim() || password.length < 4 || submitting}
         >
           <UserPlus size={17} />
-          {submitting ? "Qo‘shilmoqda…" : "Foydalanuvchi qo‘shish"}
+          {submitting ? t("admin.submitting") : t("admin.submit")}
         </button>
       </form>
 
@@ -259,7 +265,7 @@ export default function AdminPage() {
                 <button
                   type="button"
                   className="icon-button"
-                  aria-label={`${u.name}ni o‘chirish`}
+                  aria-label={t("admin.delete_user_aria", { name: u.name })}
                   onClick={() => remove(u.id)}
                 >
                   <Trash2 size={17} />

@@ -2,6 +2,7 @@
 
 import { X } from "lucide-react";
 import { useEffect, useId, useRef, type ReactNode } from "react";
+import { useLang } from "@/lib/useLang";
 
 export default function Modal({
   title,
@@ -14,6 +15,7 @@ export default function Modal({
   onClose: () => void;
   children: ReactNode;
 }) {
+  const { t } = useLang();
   const ref = useRef<HTMLDialogElement>(null);
   const titleId = useId();
   const descriptionId = useId();
@@ -58,7 +60,7 @@ export default function Modal({
           <span className="eyebrow">PEER SPACE</span>
           <h2 id={titleId}>{title}</h2>
         </div>
-        <button className="icon-button" onClick={onClose} aria-label="Yopish">
+        <button className="icon-button" onClick={onClose} aria-label={t("modal.close")}>
           <X size={20} />
         </button>
       </header>

@@ -7,6 +7,7 @@ import CreatePostModal from "./CreatePostModal";
 import PostImage from "./PostImage";
 import { useDemo } from "./DemoProvider";
 import { REACTION_EMOJIS } from "@/lib/reactions";
+import { useLang } from "@/lib/useLang";
 import type { Post } from "./types";
 
 export default function PostCard({
@@ -18,6 +19,7 @@ export default function PostCard({
 }) {
   const { user, toggleLike, toggleSave, toggleReaction, addComment, deletePost } =
     useDemo();
+  const { t } = useLang();
   const [pickerOpen, setPickerOpen] = useState(false);
   const [commentsOpen, setCommentsOpen] = useState(false);
   const [comment, setComment] = useState("");
@@ -54,18 +56,18 @@ export default function PostCard({
             <>
               <button
                 className="icon-button small-icon"
-                aria-label="Postni tahrirlash"
-                title="Tahrirlash"
+                aria-label={t("postCard.edit_post")}
+                title={t("postCard.edit_title")}
                 onClick={() => setEditing(true)}
               >
                 <Pencil size={16} />
               </button>
               <button
                 className="icon-button small-icon"
-                aria-label="Postni o'chirish"
-                title="O'chirish"
+                aria-label={t("postCard.delete_post")}
+                title={t("postCard.delete_title")}
                 onClick={() => {
-                  if (confirm("Bu postni o'chirmoqchimisiz?")) deletePost(post.id);
+                  if (confirm(t("postCard.delete_confirm"))) deletePost(post.id);
                 }}
               >
                 <Trash2 size={16} />
@@ -80,7 +82,7 @@ export default function PostCard({
           <PostImage
             key={post.image}
             src={post.image}
-            alt={`${post.author.name} ulashgan loyiha rasmi`}
+            alt={t("postCard.post_image_alt", { name: post.author.name })}
           />
         </div>
       )}
@@ -90,7 +92,7 @@ export default function PostCard({
             className={`post-action ${post.liked ? "is-liked" : ""}`}
             onClick={() => toggleLike(post.id)}
             aria-pressed={post.liked}
-            aria-label={`Yoqdi: ${post.likes}`}
+            aria-label={t("postCard.like_aria", { n: post.likes })}
           >
             <Heart size={20} fill={post.liked ? "currentColor" : "none"} />
             <span>{post.likes}</span>
@@ -100,7 +102,7 @@ export default function PostCard({
             onClick={() => setCommentsOpen(!commentsOpen)}
             aria-expanded={commentsOpen}
             aria-controls={commentsId}
-            aria-label={`Kommentlar: ${post.comments.length}`}
+            aria-label={t("postCard.comments_aria", { n: post.comments.length })}
           >
             <MessageCircle size={20} />
             <span>{post.comments.length}</span>
@@ -111,9 +113,9 @@ export default function PostCard({
           onClick={() => toggleSave(post.id)}
           aria-pressed={post.saved}
           aria-label={
-            post.saved ? "Saqlanganlardan olib tashlash" : "Postni saqlash"
+            post.saved ? t("postCard.unsave_post") : t("postCard.save_post")
           }
-          title={post.saved ? "Saqlangan" : "Saqlash"}
+          title={post.saved ? t("postCard.saved") : t("postCard.save")}
         >
           <Bookmark size={20} fill={post.saved ? "currentColor" : "none"} />
         </button>
@@ -125,7 +127,7 @@ export default function PostCard({
             className={`reaction-pill ${post.myReaction === r.emoji ? "is-active" : ""}`}
             onClick={() => toggleReaction(post.id, r.emoji)}
             aria-pressed={post.myReaction === r.emoji}
-            aria-label={`${r.emoji} reaktsiya: ${r.count}`}
+            aria-label={t("postCard.reaction_aria", { emoji: r.emoji, n: r.count })}
           >
             <span>{r.emoji}</span>
             <span>{r.count}</span>
@@ -134,8 +136,8 @@ export default function PostCard({
         <div className="reaction-picker-wrap">
           <button
             className="icon-button small-icon"
-            aria-label="Reaktsiya qo'shish"
-            title="Reaktsiya qo'shish"
+            aria-label={t("postCard.add_reaction")}
+            title={t("postCard.add_reaction")}
             onClick={() => setPickerOpen((v) => !v)}
           >
             <SmilePlus size={16} />
@@ -146,7 +148,7 @@ export default function PostCard({
                 <button
                   key={emoji}
                   className="reaction-picker-option"
-                  aria-label={`${emoji} bilan reaktsiya bildirish`}
+                  aria-label={t("postCard.reaction_option_aria", { emoji })}
                   onClick={() => {
                     toggleReaction(post.id, emoji);
                     setPickerOpen(false);
@@ -163,13 +165,14 @@ export default function PostCard({
         <section
           id={commentsId}
           className="comments-section"
-          aria-label="Kommentlar"
+          aria-label={t("postCard.comments_section_aria")}
         >
           <h3>
-            Fikrlar <span className="muted">({post.comments.length})</span>
+            {t("postCard.comments_heading")}{" "}
+            <span className="muted">({post.comments.length})</span>
           </h3>
           {post.comments.length === 0 && (
-            <p className="muted small">Suhbatni birinchi bo‘lib boshlang.</p>
+            <p className="muted small">{t("postCard.first_comment")}</p>
           )}
           <div className="comment-list">
             {post.comments.map((item) => (
@@ -188,8 +191,8 @@ export default function PostCard({
           <form className="comment-form" onSubmit={submitComment}>
             <Avatar user={user} size="sm" />
             <input
-              aria-label="Komment yozish"
-              placeholder="Fikringizni yozing…"
+              aria-label={t("postCard.comment_aria")}
+              placeholder={t("postCard.comment_placeholder")}
               value={comment}
               onChange={(e) => setComment(e.target.value)}
               maxLength={500}
@@ -199,7 +202,7 @@ export default function PostCard({
               type="submit"
               className="icon-button"
               disabled={!comment.trim()}
-              aria-label="Kommentni yuborish"
+              aria-label={t("postCard.send_comment")}
             >
               <Send size={18} />
             </button>

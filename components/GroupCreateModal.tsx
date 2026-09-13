@@ -5,6 +5,7 @@ import { useState, type FormEvent } from "react";
 import Avatar from "./Avatar";
 import Modal from "./Modal";
 import { useDemo } from "./DemoProvider";
+import { useLang } from "@/lib/useLang";
 
 export default function GroupCreateModal({
   onClose,
@@ -14,6 +15,7 @@ export default function GroupCreateModal({
   onCreated?: (conversationId: string) => void;
 }) {
   const { peers, createGroup } = useDemo();
+  const { t } = useLang();
   const [name, setName] = useState("");
   const [selected, setSelected] = useState<string[]>([]);
   const [error, setError] = useState("");
@@ -35,33 +37,33 @@ export default function GroupCreateModal({
       onCreated?.(id);
       onClose();
     } catch {
-      setError("Guruh yaratishda xatolik yuz berdi.");
+      setError(t("groupCreateModal.err"));
       setSubmitting(false);
     }
   }
 
   return (
     <Modal
-      title="Yangi guruh"
-      description="Bir nechta pir bilan birga suhbat oching."
+      title={t("groupCreateModal.title")}
+      description={t("groupCreateModal.desc")}
       onClose={onClose}
     >
       <form onSubmit={submit} className="stack-form">
         <label className="field">
-          <span>Guruh nomi</span>
+          <span>{t("groupCreateModal.name_label")}</span>
           <input
             autoFocus
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="Masalan: Frontend jamoasi"
+            placeholder={t("groupCreateModal.name_placeholder")}
             maxLength={60}
             required
           />
         </label>
         <fieldset className="field group-fieldset">
           <legend>
-            <Users size={15} /> A’zolarni tanlang
+            <Users size={15} /> {t("groupCreateModal.members_legend")}
           </legend>
           <div className="group-member-list">
             {peers.map((peer) => (
@@ -77,7 +79,7 @@ export default function GroupCreateModal({
             ))}
           </div>
           {peers.length === 0 && (
-            <p className="muted small">Hozircha pirlar topilmadi.</p>
+            <p className="muted small">{t("groupCreateModal.no_peers")}</p>
           )}
         </fieldset>
         {error && (
@@ -91,14 +93,16 @@ export default function GroupCreateModal({
             className="button button-secondary"
             onClick={onClose}
           >
-            Bekor qilish
+            {t("common.cancel")}
           </button>
           <button
             className="button button-primary"
             type="submit"
             disabled={!name.trim() || selected.length === 0 || submitting}
           >
-            {submitting ? "Ochilmoqda…" : "Guruh ochish"}
+            {submitting
+              ? t("groupCreateModal.submitting")
+              : t("groupCreateModal.submit")}
             {!submitting && <ArrowUpRight size={17} />}
           </button>
         </div>

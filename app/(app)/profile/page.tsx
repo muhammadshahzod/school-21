@@ -18,9 +18,11 @@ import CreatePostModal from "@/components/CreatePostModal";
 import EditProfileModal from "@/components/EditProfileModal";
 import PostCard from "@/components/PostCard";
 import { useDemo } from "@/components/DemoProvider";
+import { useLang } from "@/lib/useLang";
 
 export default function ProfilePage() {
   const { user, posts } = useDemo();
+  const { t } = useLang();
   const [editing, setEditing] = useState(false);
   const [changingPassword, setChangingPassword] = useState(false);
   const [creating, setCreating] = useState(false);
@@ -32,18 +34,18 @@ export default function ProfilePage() {
   return (
     <div className="page-container profile-page">
       <div className="profile-cover">
-        <span className="eyebrow">SCHOOL 21 · TOSHKENT</span>
+        <span className="eyebrow">{t("profile.eyebrow")}</span>
         <div className="profile-cover-copy">
-          Always a peer.
+          {t("profile.cover_line1")}
           <br />
-          <span>Never stop learning.</span>
+          <span>{t("profile.cover_line2")}</span>
         </div>
         <span className="profile-cover-number" aria-hidden="true">
           21<span>↗</span>
         </span>
         <div className="profile-cover-footer">
-          <span>LEARN / BUILD / REPEAT</span>
-          <span>EST. 2026</span>
+          <span>{t("profile.cover_footer_left")}</span>
+          <span>{t("profile.cover_footer_right")}</span>
         </div>
       </div>
       <section className="profile-details">
@@ -55,14 +57,14 @@ export default function ProfilePage() {
               onClick={() => setEditing(true)}
             >
               <Pencil size={16} />
-              Tahrirlash
+              {t("profile.edit")}
             </button>
             <button
               className="button button-secondary"
               onClick={() => setChangingPassword(true)}
             >
               <KeyRound size={16} />
-              Parolni o‘zgartirish
+              {t("profile.change_password")}
             </button>
           </div>
         </div>
@@ -76,7 +78,7 @@ export default function ProfilePage() {
               @{user.username}
               <span>·</span>
               <MapPin size={14} />
-              Toshkent, Uzbekistan
+              {t("profile.location")}
             </p>
             <p className="profile-bio">{user.bio}</p>
             <div className="tag-list">
@@ -90,15 +92,15 @@ export default function ProfilePage() {
           <div className="profile-stats">
             <div>
               <strong>{myPosts.length.toString().padStart(2, "0")}</strong>
-              <span>Postlar</span>
+              <span>{t("profile.posts_stat")}</span>
             </div>
             <div>
               <strong>{user.skills.length.toString().padStart(2, "0")}</strong>
-              <span>Skill’lar</span>
+              <span>{t("profile.skills_stat")}</span>
             </div>
             <div>
               <strong>01</strong>
-              <span>Loyiha</span>
+              <span>{t("profile.project_stat")}</span>
             </div>
           </div>
         </div>
@@ -109,7 +111,7 @@ export default function ProfilePage() {
           <button
             className="icon-button small-icon"
             onClick={() => setNotice("")}
-            aria-label="Bildirishnomani yopish"
+            aria-label={t("profile.dismiss_notice")}
           >
             <X size={16} />
           </button>
@@ -120,7 +122,7 @@ export default function ProfilePage() {
           <div
             className="profile-tabs"
             role="tablist"
-            aria-label="Profil postlari"
+            aria-label={t("profile.tabs_aria")}
           >
             <button
               id="my-posts-tab"
@@ -131,7 +133,8 @@ export default function ProfilePage() {
               onClick={() => setTab("posts")}
             >
               <Grid2X2 size={17} />
-              Postlar<span>{myPosts.length}</span>
+              {t("profile.posts_tab")}
+              <span>{myPosts.length}</span>
             </button>
             <button
               id="saved-posts-tab"
@@ -142,7 +145,7 @@ export default function ProfilePage() {
               onClick={() => setTab("saved")}
             >
               <Bookmark size={17} />
-              Saqlangan
+              {t("profile.saved_tab")}
             </button>
           </div>
           <div
@@ -161,13 +164,13 @@ export default function ProfilePage() {
                 <Bookmark size={28} strokeWidth={1.3} />
                 <h2>
                   {tab === "saved"
-                    ? "Yaxshi g‘oyalarni saqlab qo‘ying"
-                    : "Birinchi postingizni yozing"}
+                    ? t("profile.empty_saved_title")
+                    : t("profile.empty_posts_title")}
                 </h2>
                 <p>
                   {tab === "saved"
-                    ? "Postdagi xatcho‘p belgisini bosing — u shu yerda ko‘rinadi."
-                    : "Davrangiz sizning fikrlaringizni kutmoqda."}
+                    ? t("profile.empty_saved_desc")
+                    : t("profile.empty_posts_desc")}
                 </p>
                 {tab === "posts" && (
                   <button
@@ -175,7 +178,7 @@ export default function ProfilePage() {
                     onClick={() => setCreating(true)}
                   >
                     <Plus size={16} />
-                    Post yozish
+                    {t("profile.write_post")}
                   </button>
                 )}
               </div>
@@ -185,7 +188,7 @@ export default function ProfilePage() {
         <aside className="project-sidebar">
           <section className="project-card">
             <div className="section-heading">
-              <span className="eyebrow">HOZIR QURMOQDAMAN</span>
+              <span className="eyebrow">{t("profile.building_now")}</span>
               <Code2 size={20} />
             </div>
             <span className="project-monogram" aria-hidden="true">
@@ -203,15 +206,15 @@ export default function ProfilePage() {
             </div>
             <div className="project-status">
               <span className="status-dot" />
-              Ish jarayonida
+              {t("profile.in_progress")}
             </div>
           </section>
           <div className="profile-note">
-            <span>01 / KUN SAYIN YAXSHIROQ</span>
+            <span>{t("profile.note_heading")}</span>
             <p>
-              Har bir katta loyiha
+              {t("profile.note_line1")}
               <br />
-              kichik qadamdan boshlanadi.
+              {t("profile.note_line2")}
             </p>
           </div>
         </aside>
@@ -219,13 +222,13 @@ export default function ProfilePage() {
       {editing && (
         <EditProfileModal
           onClose={() => setEditing(false)}
-          onSaved={() => setNotice("Profilingiz yangilandi.")}
+          onSaved={() => setNotice(t("profile.notice_updated"))}
         />
       )}
       {changingPassword && (
         <ChangePasswordModal
           onClose={() => setChangingPassword(false)}
-          onSaved={() => setNotice("Parolingiz yangilandi.")}
+          onSaved={() => setNotice(t("profile.notice_password_updated"))}
         />
       )}
       {creating && <CreatePostModal onClose={() => setCreating(false)} />}

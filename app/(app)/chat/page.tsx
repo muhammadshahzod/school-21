@@ -11,6 +11,7 @@ import {
   UserPlus,
 } from "lucide-react";
 import { Suspense, useEffect, useRef, useState, type FormEvent } from "react";
+import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import Avatar from "@/components/Avatar";
 import ChatBubble from "@/components/ChatBubble";
@@ -18,6 +19,7 @@ import GroupCreateModal from "@/components/GroupCreateModal";
 import NewMessageModal from "@/components/NewMessageModal";
 import { useDemo } from "@/components/DemoProvider";
 import { GENERAL_CHANNEL_ID } from "@/lib/api";
+import { useLang } from "@/lib/useLang";
 
 function ChatContent() {
   const {
@@ -29,6 +31,7 @@ function ChatContent() {
     markRead,
     ensureConversation,
   } = useDemo();
+  const { t } = useLang();
   const params = useSearchParams();
   const peerId = params.get("peer");
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -60,7 +63,7 @@ function ChatContent() {
     return (
       peers.find((peer) => peer.id === senderId)?.name ??
       selected?.members?.find((member) => member.id === senderId)?.name ??
-      "Foydalanuvchi"
+      t("chat.default_sender")
     );
   }
 
@@ -94,38 +97,39 @@ function ChatContent() {
         <div>
           <div className="eyebrow intro-eyebrow">
             <span className="tiny-square" />
-            SUHBATDAN HAMKORLIKKA
+            {t("chat.eyebrow")}
           </div>
-          <h1>Aloqada bo‘ling.</h1>
-          <p>Keyingi yaxshi g‘oya oddiy salomdan boshlanadi.</p>
+          <h1>{t("chat.heading")}</h1>
+          <p>{t("chat.subtitle")}</p>
         </div>
         <span className="intro-side-note">
           <MessageCircle size={18} />
-          Sizning suhbatlaringiz
+          {t("chat.side_note")}
         </span>
       </section>
       <div
         className={`chat-layout ${selectedVisible ? "conversation-open" : ""}`}
       >
-        <aside className="conversation-sidebar" aria-label="Suhbatlar">
+        <aside className="conversation-sidebar" aria-label={t("chat.messages_heading")}>
           <div className="conversation-list-heading">
             <h2>
-              Xabarlar<span>{conversations.length}</span>
+              {t("chat.messages_heading")}
+              <span>{conversations.length}</span>
             </h2>
             <div className="conversation-list-actions">
               <button
                 className="icon-button"
                 onClick={() => setStartingNewMessage(true)}
-                aria-label="Yangi xabar yozish"
-                title="Yangi xabar"
+                aria-label={t("chat.new_message_title")}
+                title={t("chat.new_message")}
               >
                 <MessageSquarePlus size={19} />
               </button>
               <button
                 className="icon-button"
                 onClick={() => setCreatingGroup(true)}
-                aria-label="Yangi guruh yaratish"
-                title="Guruh yaratish"
+                aria-label={t("chat.new_group_title")}
+                title={t("chat.new_group")}
               >
                 <UserPlus size={19} />
               </button>
@@ -135,8 +139,8 @@ function ChatContent() {
             <Search size={17} />
             <input
               type="search"
-              placeholder="Pirni qidirish…"
-              aria-label="Suhbatlarni qidirish"
+              placeholder={t("chat.search_placeholder")}
+              aria-label={t("chat.search_placeholder")}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
@@ -164,7 +168,7 @@ function ChatContent() {
                     {conversation.unread > 0 && (
                       <span
                         className="unread-count"
-                        aria-label={`${conversation.unread} ta o‘qilmagan xabar`}
+                        aria-label={t("chat.unread_aria", { n: conversation.unread })}
                       >
                         {conversation.unread}
                       </span>
@@ -175,14 +179,14 @@ function ChatContent() {
             ))}
           </div>
           {visibleConversations.length === 0 && (
-            <p className="empty-conversations">Suhbat topilmadi.</p>
+            <p className="empty-conversations">{t("chat.no_conversations")}</p>
           )}
           <div className="chat-sidebar-footer">
             <span className="mini-brand">21</span>
             <span>
-              Birga o‘rganish.
+              {t("chat.footer_line1")}
               <br />
-              <strong>Suhbatdan boshlanadi.</strong>
+              <strong>{t("chat.footer_line2")}</strong>
             </span>
             <ArrowUpRight size={19} />
           </div>
@@ -190,12 +194,12 @@ function ChatContent() {
         {selected ? (
           <section
             className="conversation-panel"
-            aria-label={`${selected.peer.name} bilan suhbat`}
+            aria-label={t("chat.conversation_aria", { name: selected.peer.name })}
           >
             <header className="chat-header">
               <button
                 className="icon-button chat-back"
-                aria-label="Suhbatlar ro‘yxatiga qaytish"
+                aria-label={t("chat.back")}
                 onClick={() => {
                   setMobileOpen(false);
                   if (peerId) window.history.replaceState(null, "", "/chat");
@@ -203,26 +207,43 @@ function ChatContent() {
               >
                 <ArrowLeft size={20} />
               </button>
-              <Avatar
-                user={selected.peer}
-                size="sm"
-                showStatus={!selected.isGroup}
-              />
+              {selected.isGroup ? (
+                <Avatar
+                  user={selected.peer}
+                  size="sm"
+                  showStatus={!selected.isGroup}
+                />
+              ) : (
+                <Link href={`/peer/${selected.peer.id}`}>
+                  <Avatar user={selected.peer} size="sm" showStatus />
+                </Link>
+              )}
               <div>
-                <h2>{selected.peer.name}</h2>
+                {selected.isGroup ? (
+                  <h2>{selected.peer.name}</h2>
+                ) : (
+                  <h2>
+                    <Link
+                      href={`/peer/${selected.peer.id}`}
+                      className="chat-header-name-link"
+                    >
+                      {selected.peer.name}
+                    </Link>
+                  </h2>
+                )}
                 <span className="small muted">
                   {isGeneral
-                    ? "Hammaga ochiq"
+                    ? t("chat.public_channel")
                     : selected.isGroup
-                      ? `${selected.members?.length ?? 0} a’zo`
+                      ? t("chat.members_count", { n: selected.members?.length ?? 0 })
                       : selected.peer.online
-                        ? "Hozir onlayn"
-                        : "Hozir oflayn"}
+                        ? t("chat.online")
+                        : t("chat.offline")}
                 </span>
               </div>
               {selected.isGroup ? (
                 <span className="tag chat-peer-skill">
-                  <Users size={13} /> {isGeneral ? "Kanal" : "Guruh"}
+                  <Users size={13} /> {isGeneral ? t("chat.channel_tag") : t("chat.group_tag")}
                 </span>
               ) : (
                 <span className="tag chat-peer-skill">
@@ -234,11 +255,11 @@ function ChatContent() {
               className="messages-scroll"
               ref={messageList}
               role="log"
-              aria-label="Xabarlar"
+              aria-label={t("chat.messages_heading")}
               aria-live="polite"
             >
               <div className="chat-date">
-                <span>Suhbat tarixi</span>
+                <span>{t("chat.chat_history")}</span>
               </div>
               {visibleMessages.map((message) => (
                 <ChatBubble
@@ -253,16 +274,16 @@ function ChatContent() {
               {visibleMessages.length === 0 && (
                 <div className="empty-state">
                   <MessageCircle size={28} />
-                  <h2>Salom deb boshlang</h2>
-                  <p>Birinchi xabaringizni yuboring.</p>
+                  <h2>{t("chat.empty_chat_title")}</h2>
+                  <p>{t("chat.empty_chat_desc")}</p>
                 </div>
               )}
             </div>
             <form className="message-composer" onSubmit={submit}>
               <textarea
                 rows={1}
-                aria-label="Xabar yozish"
-                placeholder="Xabaringizni yozing…"
+                aria-label={t("chat.message_placeholder")}
+                placeholder={t("chat.message_placeholder")}
                 value={draft}
                 onChange={(e) =>
                   setDrafts((prev) => ({
@@ -286,7 +307,7 @@ function ChatContent() {
                 className="send-message-button"
                 type="submit"
                 disabled={!draft.trim()}
-                aria-label="Xabarni yuborish"
+                aria-label={t("chat.send_message")}
               >
                 <Send size={19} />
               </button>
@@ -295,7 +316,7 @@ function ChatContent() {
         ) : (
           <div className="empty-state">
             <MessageCircle size={30} />
-            <h2>Suhbatlar hali yo‘q</h2>
+            <h2>{t("chat.no_chats_title")}</h2>
           </div>
         )}
       </div>
@@ -324,11 +345,12 @@ function ChatContent() {
 }
 
 export default function ChatPage() {
+  const { t } = useLang();
   return (
     <Suspense
       fallback={
         <div className="loading-screen" role="status">
-          Suhbatlar yuklanmoqda…
+          {t("chat.loading")}
         </div>
       }
     >

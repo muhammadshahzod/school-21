@@ -2,6 +2,7 @@
 
 import { Trash2 } from "lucide-react";
 import { useDemo } from "./DemoProvider";
+import { useLang } from "@/lib/useLang";
 import type { Message } from "./types";
 
 export default function ChatBubble({
@@ -14,6 +15,7 @@ export default function ChatBubble({
   senderName?: string;
 }) {
   const { user, deleteMessage } = useDemo();
+  const { t } = useLang();
   const isAdmin = user.username === "shahzod";
   return (
     <div className={`chat-message ${isOwn ? "own" : "incoming"}`}>
@@ -21,10 +23,10 @@ export default function ChatBubble({
         {isAdmin && (
           <button
             className="chat-bubble-delete"
-            aria-label="Xabarni o'chirish"
-            title="O'chirish (admin)"
+            aria-label={t("chatBubble.delete_message")}
+            title={t("chatBubble.delete_title")}
             onClick={() => {
-              if (confirm("Bu xabarni o'chirmoqchimisiz?"))
+              if (confirm(t("chatBubble.delete_confirm")))
                 deleteMessage(message.id);
             }}
           >

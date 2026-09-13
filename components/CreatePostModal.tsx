@@ -5,6 +5,7 @@ import { useRef, useState, type FormEvent } from "react";
 import Avatar from "./Avatar";
 import Modal from "./Modal";
 import { useDemo } from "./DemoProvider";
+import { useLang } from "@/lib/useLang";
 import { SKILLS, type Post } from "./types";
 
 const MAX_IMAGE_BYTES = 2 * 1024 * 1024;
@@ -19,6 +20,7 @@ export default function CreatePostModal({
   editing?: Post;
 }) {
   const { user, addPost, editPost } = useDemo();
+  const { t } = useLang();
   const [text, setText] = useState(editing?.text ?? "");
   const [image, setImage] = useState(editing?.image ?? "");
   const [skill, setSkill] = useState<string>(editing?.skill ?? SKILLS[0]);
@@ -29,11 +31,11 @@ export default function CreatePostModal({
   function handleFile(file: File | undefined) {
     if (!file) return;
     if (!file.type.startsWith("image/")) {
-      setError("Faqat rasm fayllari qabul qilinadi.");
+      setError(t("createPostModal.err_image_type"));
       return;
     }
     if (file.size > MAX_IMAGE_BYTES) {
-      setError("Rasm hajmi 2MB dan oshmasligi kerak.");
+      setError(t("createPostModal.err_image_size"));
       return;
     }
     setError("");
@@ -50,7 +52,7 @@ export default function CreatePostModal({
         if (!["http:", "https:"].includes(new URL(image.trim()).protocol))
           throw new Error();
       } catch {
-        setError("Rasm uchun to‘g‘ri http:// yoki https:// havola kiriting.");
+        setError(t("createPostModal.err_invalid_url"));
         return;
       }
     }
@@ -66,20 +68,16 @@ export default function CreatePostModal({
       onClose();
     } catch {
       setError(
-        editing
-          ? "Postni yangilashda xatolik yuz berdi. Qaytadan urinib ko‘ring."
-          : "Post yaratishda xatolik yuz berdi. Qaytadan urinib ko‘ring.",
+        editing ? t("createPostModal.err_update") : t("createPostModal.err_create"),
       );
       setSubmitting(false);
     }
   }
   return (
     <Modal
-      title={editing ? "Postni tahrirlash." : "Bir fikrdan boshlanadi."}
+      title={editing ? t("createPostModal.edit_title") : t("createPostModal.new_title")}
       description={
-        editing
-          ? "Post matnini, rasmini yoki yo‘nalishini yangilang."
-          : "G‘oya, savol yoki yangi yutuq — davrangiz bilan ulashing."
+        editing ? t("createPostModal.edit_desc") : t("createPostModal.new_desc")
       }
       onClose={onClose}
     >
@@ -88,17 +86,17 @@ export default function CreatePostModal({
           <Avatar user={user} />
           <div>
             <strong>{user.name}</strong>
-            <span className="muted small">Hamjamiyatga ochiq</span>
+            <span className="muted small">{t("createPostModal.public_note")}</span>
           </div>
         </div>
         <label className="field">
-          <span>Post matni</span>
+          <span>{t("createPostModal.text_label")}</span>
           <textarea
             autoFocus
             rows={5}
             value={text}
             onChange={(e) => setText(e.target.value)}
-            placeholder="Bugun nimalar ustida ishlayapsiz?"
+            placeholder={t("createPostModal.text_placeholder")}
             maxLength={2000}
             required
           />
@@ -106,8 +104,8 @@ export default function CreatePostModal({
         </label>
         <label className="field">
           <span>
-            <ImagePlus size={15} /> Rasm{" "}
-            <span className="muted">(ixtiyoriy)</span>
+            <ImagePlus size={15} /> {t("createPostModal.image_label")}{" "}
+            <span className="muted">{t("createPostModal.optional")}</span>
           </span>
           <input
             type="url"
@@ -116,7 +114,7 @@ export default function CreatePostModal({
               setImage(e.target.value);
               setError("");
             }}
-            placeholder="https://example.com/rasm.jpg"
+            placeholder={t("createPostModal.image_placeholder")}
             disabled={image.startsWith("data:")}
             aria-describedby={error ? "image-error" : undefined}
             aria-invalid={Boolean(error)}
@@ -136,16 +134,16 @@ export default function CreatePostModal({
             onClick={() => fileInputRef.current?.click()}
           >
             <Upload size={15} />
-            Fayldan yuklash
+            {t("createPostModal.upload_from_file")}
           </button>
           {image.startsWith("data:") && (
             <div className="image-upload-preview">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={image} alt="Yuklangan rasm" />
+              <img src={image} alt={t("createPostModal.uploaded_image_alt")} />
               <button
                 type="button"
                 className="icon-button small-icon"
-                aria-label="Rasmni olib tashlash"
+                aria-label={t("createPostModal.remove_image")}
                 onClick={() => {
                   setImage("");
                   if (fileInputRef.current) fileInputRef.current.value = "";
@@ -162,7 +160,7 @@ export default function CreatePostModal({
           </p>
         )}
         <label className="field">
-          <span>Yo‘nalish</span>
+          <span>{t("createPostModal.direction_label")}</span>
           <select value={skill} onChange={(e) => setSkill(e.target.value)}>
             {SKILLS.map((item) => (
               <option key={item}>{item}</option>
@@ -175,7 +173,7 @@ export default function CreatePostModal({
             className="button button-secondary"
             onClick={onClose}
           >
-            Bekor qilish
+            {t("common.cancel")}
           </button>
           <button
             className="button button-primary"
@@ -183,10 +181,10 @@ export default function CreatePostModal({
             disabled={!text.trim() || submitting}
           >
             {submitting
-              ? "Saqlanmoqda…"
+              ? t("createPostModal.saving")
               : editing
-                ? "Yangilash"
-                : "Ulashish"}
+                ? t("createPostModal.update")
+                : t("createPostModal.share")}
             {!submitting && <ArrowUpRight size={17} />}
           </button>
         </div>

@@ -4,6 +4,7 @@ import { Check } from "lucide-react";
 import { useState, type FormEvent } from "react";
 import Modal from "./Modal";
 import { changePassword } from "@/lib/api";
+import { useLang } from "@/lib/useLang";
 
 export default function ChangePasswordModal({
   onClose,
@@ -12,6 +13,7 @@ export default function ChangePasswordModal({
   onClose: () => void;
   onSaved: () => void;
 }) {
+  const { t } = useLang();
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [error, setError] = useState("");
@@ -28,7 +30,7 @@ export default function ChangePasswordModal({
       onClose();
     } catch (err) {
       setError(
-        err instanceof Error ? err.message : "Parolni yangilashda xatolik yuz berdi.",
+        err instanceof Error ? err.message : t("changePasswordModal.err_generic"),
       );
       setSubmitting(false);
     }
@@ -36,13 +38,13 @@ export default function ChangePasswordModal({
 
   return (
     <Modal
-      title="Parolni o‘zgartirish"
-      description="Joriy parolingizni tasdiqlab, yangi parol o‘rnating."
+      title={t("changePasswordModal.title")}
+      description={t("changePasswordModal.desc")}
       onClose={onClose}
     >
       <form onSubmit={submit} className="stack-form">
         <label className="field">
-          <span>Joriy parol</span>
+          <span>{t("changePasswordModal.current_label")}</span>
           <input
             autoFocus
             type="password"
@@ -53,12 +55,12 @@ export default function ChangePasswordModal({
           />
         </label>
         <label className="field">
-          <span>Yangi parol</span>
+          <span>{t("changePasswordModal.new_label")}</span>
           <input
             type="password"
             value={newPassword}
             onChange={(e) => setNewPassword(e.target.value)}
-            placeholder="kamida 4 belgi"
+            placeholder={t("changePasswordModal.new_placeholder")}
             autoComplete="new-password"
             required
           />
@@ -74,7 +76,7 @@ export default function ChangePasswordModal({
             className="button button-secondary"
             onClick={onClose}
           >
-            Bekor qilish
+            {t("common.cancel")}
           </button>
           <button
             className="button button-primary"
@@ -82,7 +84,9 @@ export default function ChangePasswordModal({
             disabled={!currentPassword || newPassword.length < 4 || submitting}
           >
             <Check size={17} />
-            {submitting ? "Saqlanmoqda…" : "Yangilash"}
+            {submitting
+              ? t("changePasswordModal.saving")
+              : t("changePasswordModal.update")}
           </button>
         </div>
       </form>

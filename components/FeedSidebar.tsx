@@ -5,6 +5,7 @@ import { ArrowDownRight, ArrowUpRight, MessageCircle } from "lucide-react";
 import { useDemo } from "./DemoProvider";
 import Avatar from "./Avatar";
 import UserCard from "./UserCard";
+import { useLang } from "@/lib/useLang";
 
 export default function FeedSidebar({
   onFilter,
@@ -12,6 +13,7 @@ export default function FeedSidebar({
   onFilter: (skill: string) => void;
 }) {
   const { user, posts, peers, community } = useDemo();
+  const { t } = useLang();
   return (
     <aside className="feed-sidebar">
       <UserCard
@@ -20,10 +22,10 @@ export default function FeedSidebar({
       />
       <section className="sidebar-section">
         <div className="section-heading">
-          <h2>Hozir davrada</h2>
+          <h2>{t("feedSidebar.online_now")}</h2>
           <span className="online-count">
             <span className="status-dot" />
-            {community.online} onlayn
+            {t("feedSidebar.online_count", { n: community.online })}
           </span>
         </div>
         <div className="online-peers">
@@ -31,10 +33,10 @@ export default function FeedSidebar({
             .filter((peer) => peer.online)
             .map((peer) => (
               <Link
-                href={`/chat?peer=${peer.id}`}
+                href={`/peer/${peer.id}`}
                 className="online-peer"
                 key={peer.id}
-                aria-label={`${peer.name} bilan suhbat`}
+                aria-label={peer.name}
               >
                 <Avatar user={peer} size="sm" showStatus />
                 <div>
@@ -48,7 +50,7 @@ export default function FeedSidebar({
       </section>
       <section className="sidebar-section topics-section">
         <div className="section-heading">
-          <h2>Davrada nima gap?</h2>
+          <h2>{t("feedSidebar.topics_heading")}</h2>
           <ArrowUpRight size={17} />
         </div>
         {community.topics.map((topic, index) => (
@@ -60,7 +62,9 @@ export default function FeedSidebar({
             <span className="topic-number">0{index + 1}</span>
             <span>
               <strong>{topic.name}</strong>
-              <small>{topic.posts} ta post</small>
+              <small>
+                {topic.posts} {t("feedSidebar.posts_suffix")}
+              </small>
             </span>
             <ArrowUpRight size={15} />
           </button>
@@ -69,14 +73,14 @@ export default function FeedSidebar({
       <div className="community-note">
         <ArrowDownRight size={27} strokeWidth={1.3} />
         <p>
-          Bu yerda har bir pirning
+          {t("feedSidebar.note_line1")}
           <br />
-          <strong>o‘z o‘rni bor.</strong>
+          <strong>{t("feedSidebar.note_line2")}</strong>
         </p>
-        <span>{community.total} pir. Cheksiz imkoniyat.</span>
+        <span>{t("feedSidebar.community_note", { n: community.total })}</span>
       </div>
       <footer className="sidebar-footer">
-        <span>School 21 pirlari tomonidan.</span>
+        <span>{t("feedSidebar.footer_note")}</span>
         <span>
           © 2026 Peer Space <span className="footer-symbol">↗</span>
         </span>

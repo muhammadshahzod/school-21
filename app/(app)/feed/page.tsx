@@ -16,17 +16,21 @@ import FeedSidebar from "@/components/FeedSidebar";
 import PostCard from "@/components/PostCard";
 import { useDemo } from "@/components/DemoProvider";
 import { SKILLS } from "@/components/types";
+import { useLang } from "@/lib/useLang";
+
+const ALL_SKILL = "Barchasi";
 
 function FeedContent({ initialQuery }: { initialQuery: string }) {
   const { posts, user } = useDemo();
+  const { t } = useLang();
   const [search, setSearch] = useState(initialQuery);
-  const [skill, setSkill] = useState("Barchasi");
+  const [skill, setSkill] = useState(ALL_SKILL);
   const [creating, setCreating] = useState(false);
   const [notice, setNotice] = useState("");
   const query = search.trim().toLocaleLowerCase();
   const filteredPosts = posts.filter(
     (post) =>
-      (skill === "Barchasi" || post.skill === skill) &&
+      (skill === ALL_SKILL || post.skill === skill) &&
       `${post.text} ${post.author.name} ${post.author.username} ${post.skill}`
         .toLocaleLowerCase()
         .includes(query),
@@ -38,19 +42,20 @@ function FeedContent({ initialQuery }: { initialQuery: string }) {
         <div>
           <div className="eyebrow intro-eyebrow">
             <span className="tiny-square" />
-            BIR KAMPUS. MING G‘OYA.
+            {t("feed.eyebrow")}
           </div>
           <h1>
-            Sizning davrangiz<span className="title-period">.</span>
+            {t("feed.heading")}
+            <span className="title-period">.</span>
           </h1>
-          <p>Fikr ulashing. Birga yarating. Birga o‘sing.</p>
+          <p>{t("feed.subtitle")}</p>
         </div>
         <button
           className="button button-primary new-post-button"
           onClick={() => setCreating(true)}
         >
           <Plus size={18} />
-          Post yozish
+          {t("feed.new_post")}
         </button>
       </section>
       <div className="feed-layout">
@@ -60,8 +65,8 @@ function FeedContent({ initialQuery }: { initialQuery: string }) {
               <Search size={19} />
               <input
                 type="search"
-                aria-label="Lentadan qidirish"
-                placeholder="Post, pir yoki skill qidirish…"
+                aria-label={t("feed.search_placeholder")}
+                placeholder={t("feed.search_placeholder")}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
               />
@@ -69,7 +74,7 @@ function FeedContent({ initialQuery }: { initialQuery: string }) {
                 <button
                   className="icon-button small-icon"
                   onClick={() => setSearch("")}
-                  aria-label="Qidiruvni tozalash"
+                  aria-label={t("feed.clear_search")}
                 >
                   <X size={16} />
                 </button>
@@ -77,16 +82,16 @@ function FeedContent({ initialQuery }: { initialQuery: string }) {
             </div>
             <div
               className="skill-filters"
-              aria-label="Skill bo‘yicha filtrlash"
+              aria-label={t("feed.filter_aria")}
             >
-              {["Barchasi", ...SKILLS].map((item) => (
+              {[ALL_SKILL, ...SKILLS].map((item) => (
                 <button
                   key={item}
                   className={`filter-button ${skill === item ? "selected" : ""}`}
                   onClick={() => setSkill(item)}
                   aria-pressed={skill === item}
                 >
-                  {item}
+                  {item === ALL_SKILL ? t("feed.filter_all") : item}
                 </button>
               ))}
             </div>
@@ -96,21 +101,21 @@ function FeedContent({ initialQuery }: { initialQuery: string }) {
             onClick={() => setCreating(true)}
           >
             <Avatar user={user} />
-            <span>Bugun nimalar ustida ishlayapsiz?</span>
+            <span>{t("feed.composer_placeholder")}</span>
             <ImagePlus size={21} />
           </button>
           <div className="feed-list-heading">
             <span>
               {query
-                ? "QIDIRUV NATIJALARI"
-                : skill === "Barchasi"
-                  ? "HAMJAMIYAT LENTASI"
-                  : `${skill.toUpperCase()} LENTASI`}
+                ? t("feed.results_heading")
+                : skill === ALL_SKILL
+                  ? t("feed.community_heading")
+                  : t("feed.skill_heading", { skill: skill.toUpperCase() })}
             </span>
             <span>
-              {filteredPosts.length} ta post
+              {t("feed.posts_count", { n: filteredPosts.length })}
               <span className="small-dot" />
-              Eng yangi
+              {t("feed.newest")}
             </span>
           </div>
           {notice && (
@@ -119,7 +124,7 @@ function FeedContent({ initialQuery }: { initialQuery: string }) {
               <button
                 className="icon-button small-icon"
                 onClick={() => setNotice("")}
-                aria-label="Bildirishnomani yopish"
+                aria-label={t("profile.dismiss_notice")}
               >
                 <X size={16} />
               </button>
@@ -133,16 +138,16 @@ function FeedContent({ initialQuery }: { initialQuery: string }) {
           {filteredPosts.length === 0 ? (
             <div className="empty-state">
               <SearchX size={32} strokeWidth={1.3} />
-              <h2>Hozircha hech narsa topilmadi</h2>
-              <p>Boshqa so‘z yoki skill bilan qidirib ko‘ring.</p>
+              <h2>{t("feed.empty_search_title")}</h2>
+              <p>{t("feed.empty_search_desc")}</p>
               <button
                 className="button button-secondary"
                 onClick={() => {
                   setSearch("");
-                  setSkill("Barchasi");
+                  setSkill(ALL_SKILL);
                 }}
               >
-                Barcha postlar
+                {t("feed.all_posts")}
               </button>
             </div>
           ) : (
@@ -150,7 +155,7 @@ function FeedContent({ initialQuery }: { initialQuery: string }) {
               <span className="feed-end-line" />
               <ArrowUpRight size={19} />
               <span className="feed-end-line" />
-              <p>Hozircha barchasi shu. Yangi g‘oya sizdan!</p>
+              <p>{t("feed.feed_end")}</p>
             </div>
           )}
         </div>
@@ -167,8 +172,8 @@ function FeedContent({ initialQuery }: { initialQuery: string }) {
           onClose={() => setCreating(false)}
           onCreated={() => {
             setSearch("");
-            setSkill("Barchasi");
-            setNotice("Postingiz davraga qo‘shildi.");
+            setSkill(ALL_SKILL);
+            setNotice(t("feed.notice_post_created"));
             window.scrollTo({ top: 0, behavior: "smooth" });
           }}
         />
@@ -188,11 +193,12 @@ function FeedRoute() {
 }
 
 export default function FeedPage() {
+  const { t } = useLang();
   return (
     <Suspense
       fallback={
         <div className="loading-screen" role="status">
-          Lenta yuklanmoqda…
+          {t("demoProvider.loading")}
         </div>
       }
     >

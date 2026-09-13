@@ -5,6 +5,7 @@ import { useRef, useState, type FormEvent } from "react";
 import Avatar from "./Avatar";
 import Modal from "./Modal";
 import { useDemo } from "./DemoProvider";
+import { useLang } from "@/lib/useLang";
 
 const MAX_AVATAR_BYTES = 2 * 1024 * 1024;
 
@@ -16,6 +17,7 @@ export default function EditProfileModal({
   onSaved: () => void;
 }) {
   const { user, updateProfile } = useDemo();
+  const { t } = useLang();
   const [name, setName] = useState(user.name);
   const [bio, setBio] = useState(user.bio);
   const [skills, setSkills] = useState(user.skills.join(", "));
@@ -27,11 +29,11 @@ export default function EditProfileModal({
   function handleFile(file: File | undefined) {
     if (!file) return;
     if (!file.type.startsWith("image/")) {
-      setError("Faqat rasm fayllari qabul qilinadi.");
+      setError(t("editProfileModal.err_image_type"));
       return;
     }
     if (file.size > MAX_AVATAR_BYTES) {
-      setError("Rasm hajmi 2MB dan oshmasligi kerak.");
+      setError(t("editProfileModal.err_image_size"));
       return;
     }
     setError("");
@@ -63,14 +65,14 @@ export default function EditProfileModal({
       onSaved();
       onClose();
     } catch {
-      setError("Saqlashda xatolik yuz berdi. Qaytadan urinib ko‘ring.");
+      setError(t("editProfileModal.err_save"));
       setSubmitting(false);
     }
   }
   return (
     <Modal
-      title="O‘zingiz haqingizda."
-      description="Davrangiz sizni yanada yaxshiroq tanisin."
+      title={t("editProfileModal.title")}
+      description={t("editProfileModal.desc")}
       onClose={onClose}
     >
       <form className="stack-form" onSubmit={submit}>
@@ -89,11 +91,11 @@ export default function EditProfileModal({
             onClick={() => fileInputRef.current?.click()}
           >
             <Upload size={15} />
-            Rasm yuklash
+            {t("editProfileModal.upload_photo")}
           </button>
         </div>
         <label className="field">
-          <span>Ism va familiya</span>
+          <span>{t("editProfileModal.name_label")}</span>
           <input
             autoFocus
             value={name}
@@ -104,7 +106,7 @@ export default function EditProfileModal({
           />
         </label>
         <label className="field">
-          <span>Qisqacha bio</span>
+          <span>{t("editProfileModal.bio_label")}</span>
           <textarea
             rows={2}
             value={bio}
@@ -113,7 +115,7 @@ export default function EditProfileModal({
           />
         </label>
         <label className="field">
-          <span>Skill’lar</span>
+          <span>{t("editProfileModal.skills_label")}</span>
           <input
             value={skills}
             onChange={(e) => setSkills(e.target.value)}
@@ -121,8 +123,7 @@ export default function EditProfileModal({
             aria-describedby="skills-hint"
           />
           <small id="skills-hint" className="muted">
-            Vergul bilan ajrating. Masalan: Frontend, React, Python. Ko‘pi bilan
-            8 ta.
+            {t("editProfileModal.skills_hint")}
           </small>
         </label>
         {error && (
@@ -136,7 +137,7 @@ export default function EditProfileModal({
             className="button button-secondary"
             onClick={onClose}
           >
-            Bekor qilish
+            {t("common.cancel")}
           </button>
           <button
             type="submit"
@@ -144,7 +145,7 @@ export default function EditProfileModal({
             disabled={!name.trim() || submitting}
           >
             <Check size={17} />
-            {submitting ? "Saqlanmoqda…" : "Saqlash"}
+            {submitting ? t("common.saving") : t("common.save")}
           </button>
         </div>
       </form>
